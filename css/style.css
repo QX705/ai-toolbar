@@ -195,6 +195,7 @@ main {
 }
 
 .tool-avatar {
+  position: relative;
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -205,6 +206,28 @@ main {
   font-size: 1.15rem;
   font-weight: 700;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar-letter {
+  user-select: none;
+}
+
+/* 网站真实图标：加载成功后覆盖在字母头像上层 */
+.tool-icon {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.tool-icon.loaded {
+  display: block;
 }
 
 .tool-name {

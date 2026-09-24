@@ -166,6 +166,24 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// 网站图标候选源：优先站点自身的 favicon.ico（国内可直连），失败依次换备用源
+function iconSources(url) {
+  let origin = "";
+  let host = "";
+  try {
+    const u = new URL(url);
+    origin = u.origin;
+    host = u.hostname;
+  } catch {
+    return [];
+  }
+  return [
+    origin + "/favicon.ico",
+    "https://api.iowen.cn/favicon/" + host + ".png",
+    "https://favicon.im/" + host + "?larger=true",
+  ];
+}
+
 // 把 Supabase 的报错翻译成中文
 function extractErrMsg(e) {
   const raw = (e && (e.message || e.error_description || e.msg)) || String(e);
@@ -276,7 +294,7 @@ function renderGrid() {
         <button class="act-btn danger" title="删除">🗑️</button>
       </div>
       <div class="tool-head">
-        <div class="tool-avatar" style="background:${avatarColor(tool.name)}">${initial}</div>
+        <div class="tool-avatar" style="background:${avatarColor(tool.name)}"><span class="avatar-letter">${initial}</span><img class="tool-icon" alt="" loading="lazy" referrerpolicy="no-referrer"></div>
         <div style="min-width:0">
           <div class="tool-name">${escapeHtml(tool.name)}</div>
           <div class="tool-domain">${escapeHtml(domainOf(tool.url))}</div>
@@ -284,6 +302,19 @@ function renderGrid() {
       </div>
       <span class="tool-cat">${escapeHtml(tool.category)}</span>
     `;
+
+    // 网站图标：逐个候选源尝试，全部失败则保留字母头像
+    const iconImg = card.querySelector(".tool-icon");
+    const sources = iconSources(tool.url);
+    let sourceIdx = 0;
+    iconImg.addEventListener("load", () => iconImg.classList.add("loaded"));
+    iconImg.addEventListener("error", () => {
+      sourceIdx++;
+      if (sourceIdx < sources.length) iconImg.src = sources[sourceIdx];
+      else iconImg.remove();
+    });
+    if (sources.length > 0) iconImg.src = sources[0];
+    else iconImg.remove();
 
     // 编辑 / 删除（阻止冒泡，避免触发打开链接）
     card.querySelector(".edit").addEventListener("click", (e) => {
