@@ -143,12 +143,14 @@ if (amapConfigured) {
     }, { threshold: 0.1 });
     mapObserver.observe(mapSection);
 
-    // 控制条上的地图图标：点击快速跳到地图板块
+    // 控制条上的地图图标：点击收起 / 展开地图板块
     const mapJumpBtn = document.getElementById("mapJump");
     if (mapJumpBtn) {
         mapJumpBtn.hidden = false;
         mapJumpBtn.addEventListener("click", () => {
-            mapSection.scrollIntoView({ behavior: "smooth" });
+            mapSection.hidden = !mapSection.hidden;
+            mapJumpBtn.classList.toggle("active", !mapSection.hidden);
+            mapJumpBtn.title = mapSection.hidden ? "展开地图" : "收起地图";
         });
     }
 }
