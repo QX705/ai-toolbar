@@ -649,7 +649,10 @@ function handleSignedIn(user) {
   localBackup = { tools: tools.slice(), note: localStorage.getItem(NOTE_KEY) || "" };
 
   syncOnLogin()
-    .then(() => { syncFailCount = 0; })
+    .then(() => {
+      syncFailCount = 0;
+      if (mapReady) loadPlaces(); // 地图已打开过就刷新地点标记
+    })
     .catch((e) => {
       // 静默自愈：Supabase 平台有"刷新令牌被拒"的间歇性故障，自动重试直到恢复
       syncing = false;
@@ -682,6 +685,16 @@ function handleSignedOut() {
   currentUser = null;
   syncing = false;
   syncFailCount = 0;
+  // 清理地图上的地点数据（已删除账号/退出的会话不再显示）
+  places = [];
+  activePlace = null;
+  pendingFiles = [];
+  if (amapMap && mapReady) {
+    placeMarkers.forEach((m) => m.setMap(null));
+    placeMarkers = [];
+    renderPlaceList();
+    closePlaceEditor();
+  }
   if (localBackup) {
     tools = localBackup.tools;
     noteText.value = localBackup.note;
@@ -831,7 +844,7 @@ function loadAmapScript() {
     window._AMapSecurityConfig = { securityJsCode: AMAP_SECURITY_CODE.trim() };
     const s = document.createElement("script");
     s.src = "https://webapi.amap.com/maps?v=2.0&key=" + encodeURIComponent(AMAP_KEY.trim()) +
-      "&plugin=AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation,AMap.Scale";
+      "&plugin=AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation,AMap.Scale,AMap.Geocoder";
     s.onload = () => {
       // 加载器是异步的：onload 后 AMap 可能还没挂载完成，轮询等它就绪（最多 10 秒）
       let waited = 0;
@@ -860,7 +873,6 @@ async function openMapPanel() {
   setMapStatus("正在加载地图…");
   try {
     await loadAmapScript();
-    let hadError = false;
 
     amapMap = new AMap.Map("mapContainer", {
       zoom: 11,
@@ -868,40 +880,42 @@ async function openMapPanel() {
       viewMode: "2D",
     });
 
-    amapMap.addControl(new AMap.Scale());
-    amapMap.addControl(new AMap.ToolBar({ position: "RB" }));
-
-    // 搜索框：输入联想 + 选中后飞到该地点并打标记
-    const autoComplete = new AMap.AutoComplete({ input: "mapSearch" });
-    autoComplete.on("select", (e) => {
-      const poi = e.poi;
-      if (!poi || !poi.location) {
-        setMapStatus("没找到该地点，换个关键词试试");
-        return;
-      }
-      const pos = [poi.location.lng, poi.location.lat];
-      amapMap.setZoomAndCenter(15, pos);
-      new AMap.Marker({ position: pos, title: poi.name, map: amapMap });
-      setMapStatus(poi.name ? "已定位：" + poi.name : "已定位");
+    amapMap.on("click", (e) => {
+      startDraft(e.lnglat.getLng(), e.lnglat.getLat(), "");
     });
-
-    // error 事件可能只是个别瓦片失败，不代表地图不可用：
-    // 记录但不立即报错，由 complete 或 15 秒兜底给出最终结论
-    amapMap.on("error", () => { hadError = true; });
 
     amapMap.on("complete", () => {
       mapReady = true;
       mapLoading = false;
       setMapStatus("");
+      loadPlaces();
     });
+
+    // 增强组件失败不影响地图本体
+    try {
+      amapMap.addControl(new AMap.Scale());
+      amapMap.addControl(new AMap.ToolBar({ position: "RB" }));
+    } catch (e) { console.warn("地图工具条不可用", e); }
+
+    try {
+      // 搜索框：输入联想 + 选中后飞到该地点，并打开攻略编辑（草稿）
+      const autoComplete = new AMap.AutoComplete({ input: "mapSearch" });
+      autoComplete.on("select", (e) => {
+        const poi = e.poi;
+        if (!poi || !poi.location) {
+          setMapStatus("没找到该地点，换个关键词试试");
+          return;
+        }
+        amapMap.setZoomAndCenter(15, [poi.location.lng, poi.location.lat]);
+        startDraft(poi.location.lng, poi.location.lat, poi.name || "");
+      });
+    } catch (e) { console.warn("搜索联想不可用", e); }
 
     // 兜底：15 秒仍未就绪才视为真正失败
     setTimeout(() => {
       if (!mapReady) {
         mapLoading = false;
-        setMapStatus(hadError
-          ? "地图加载失败：请检查 Key 和安全密钥是否配对"
-          : "地图加载超时：请检查网络");
+        setMapStatus("地图加载失败：请检查 Key / 安全密钥 / 网络");
       }
     }, 15000);
   } catch (e) {
@@ -912,10 +926,7 @@ async function openMapPanel() {
       setTimeout(openMapPanel, 1500);
       return;
     }
-    const msg = (e.message || "").includes("AMap")
-      ? "地图脚本加载异常：请检查 Key 是否正确、网络是否可达 webapi.amap.com"
-      : "地图加载失败：" + (e.message || "请检查 Key 配置");
-    setMapStatus(msg);
+    setMapStatus("地图加载失败：请检查 Key 是否正确、网络是否可达 webapi.amap.com");
   }
 }
 
@@ -940,6 +951,266 @@ document.getElementById("mapLocate").addEventListener("click", () => {
       setMapStatus("定位失败：请检查浏览器定位权限");
     }
   });
+});
+
+// =========================================================
+// 地点攻略：地图选点 → 写攻略 → 传照片（存自己的 Supabase）
+// =========================================================
+const placeEditor = document.getElementById("placeEditor");
+const placeName = document.getElementById("placeName");
+const placeGuide = document.getElementById("placeGuide");
+const placePhotoInput = document.getElementById("placePhotoInput");
+const photoGrid = document.getElementById("photoGrid");
+const placeError = document.getElementById("placeError");
+const placeSaveBtn = document.getElementById("placeSaveBtn");
+const placeDeleteBtn = document.getElementById("placeDeleteBtn");
+const placeList = document.getElementById("placeList");
+const placeHint = document.getElementById("placeHint");
+
+let places = [];            // 已保存的地点（云端数据）
+let activePlace = null;     // 正在编辑的地点
+let pendingFiles = [];      // 待上传的图片文件
+let placeMarkers = [];      // 地图上的地点标记
+
+function renderPhotoGrid() {
+  photoGrid.innerHTML = "";
+  activePlace.photos.forEach((url) => {
+    const wrap = document.createElement("div");
+    wrap.className = "photo-item";
+    wrap.innerHTML = `<img src="${escapeHtml(url)}" alt=""><button class="photo-del" title="删除图片">✕</button>`;
+    wrap.querySelector(".photo-del").addEventListener("click", () => {
+      activePlace.removedPhotos.push(url);
+      activePlace.photos = activePlace.photos.filter((u) => u !== url);
+      renderPhotoGrid();
+    });
+    photoGrid.appendChild(wrap);
+  });
+  pendingFiles.forEach((f, i) => {
+    const wrap = document.createElement("div");
+    wrap.className = "photo-item";
+    wrap.innerHTML = `<img src="${URL.createObjectURL(f)}" alt=""><button class="photo-del" title="移除">✕</button>`;
+    wrap.querySelector(".photo-del").addEventListener("click", () => {
+      pendingFiles.splice(i, 1);
+      renderPhotoGrid();
+    });
+    photoGrid.appendChild(wrap);
+  });
+}
+
+function openPlaceEditor(p) {
+  activePlace = {
+    id: p.id || null,
+    isNew: !p.id,
+    lng: p.lng,
+    lat: p.lat,
+    guide: p.guide || "",
+    photos: [...(p.photos || [])],
+    removedPhotos: [],
+    name: p.name || "",
+  };
+  pendingFiles = [];
+  placeEditor.hidden = false;
+  placeHint.hidden = true;
+  placeName.value = activePlace.name;
+  placeGuide.value = activePlace.guide;
+  placeError.textContent = "";
+  placeError.classList.remove("ok");
+  placeDeleteBtn.hidden = activePlace.isNew;
+  renderPhotoGrid();
+  placeName.focus();
+}
+
+function closePlaceEditor() {
+  placeEditor.hidden = true;
+  placeHint.hidden = false;
+  activePlace = null;
+  pendingFiles = [];
+}
+
+function startDraft(lng, lat, presetName) {
+  if (!currentUser) {
+    setMapStatus("登录后才能记录地点攻略哦");
+    return;
+  }
+  openPlaceEditor({ lng, lat, name: presetName });
+
+  // 没有名字时用逆地理编码补一个地址
+  if (!presetName && window.AMap && AMap.Geocoder) {
+    const geo = new AMap.Geocoder();
+    geo.getAddress([lng, lat], (status, result) => {
+      if (status === "complete" && result.regeocode && activePlace && !placeName.value) {
+        const addr = result.regeocode.formattedAddress || "";
+        placeName.value = addr.replace(/^中国/, "").slice(0, 30);
+      }
+    });
+  }
+}
+
+function updatePlacesAfterSave(saved) {
+  const idx = places.findIndex((p) => p.id === saved.id);
+  if (idx >= 0) places[idx] = saved;
+  else places.push(saved);
+  renderMarkers();
+  renderPlaceList();
+}
+
+function renderMarkers() {
+  if (!amapMap) return;
+  placeMarkers.forEach((m) => m.setMap(null));
+  placeMarkers = [];
+  places.forEach((p) => {
+    const m = new AMap.Marker({
+      position: [p.lng, p.lat],
+      title: p.name,
+      map: amapMap,
+      label: { content: escapeHtml(p.name), direction: "top" },
+    });
+    m.on("click", () => {
+      amapMap.setZoomAndCenter(15, [p.lng, p.lat]);
+      openPlaceEditor(p);
+    });
+    placeMarkers.push(m);
+  });
+}
+
+function renderPlaceList() {
+  placeList.innerHTML = "";
+  if (places.length === 0) {
+    const p = document.createElement("p");
+    p.className = "place-hint";
+    p.textContent = "还没有保存的地点";
+    placeList.appendChild(p);
+    return;
+  }
+  places.forEach((p) => {
+    const item = document.createElement("div");
+    item.className = "place-item";
+    item.innerHTML = `<strong>${escapeHtml(p.name)}</strong><span>${p.guide ? escapeHtml(p.guide.slice(0, 24)) : "点击填写攻略"}</span>`;
+    item.addEventListener("click", () => {
+      amapMap.setZoomAndCenter(14, [p.lng, p.lat]);
+      openPlaceEditor(p);
+    });
+    placeList.appendChild(item);
+  });
+}
+
+async function loadPlaces() {
+  if (!currentUser || !supabaseClient || !mapReady) return;
+  const { data, error } = await supabaseClient
+    .from("places")
+    .select("*")
+    .order("created_at", { ascending: true });
+  if (error) {
+    setMapStatus("地点加载失败：" + extractErrMsg(error));
+    return;
+  }
+  places = data || [];
+  renderMarkers();
+  renderPlaceList();
+}
+
+placePhotoInput.addEventListener("change", () => {
+  const files = [...placePhotoInput.files].filter((f) => f.type.startsWith("image/") && f.size <= 5 * 1024 * 1024);
+  if (files.length === 0) return;
+  pendingFiles = pendingFiles.concat(files);
+  if (!activePlace) {
+    // 未选点前先按地图中心建草稿
+    const c = amapMap ? amapMap.getCenter() : null;
+    startDraft(c ? c.getLng() : 116.397, c ? c.getLat() : 39.909, "");
+  }
+  renderPhotoGrid();
+  placePhotoInput.value = "";
+});
+
+placeSaveBtn.addEventListener("click", async () => {
+  if (!activePlace) return;
+  if (!currentUser) {
+    placeError.textContent = "请先登录，攻略和图片才会保存到你的账号";
+    return;
+  }
+  const name = placeName.value.trim();
+  if (!name) {
+    placeError.textContent = "请填写地点名称";
+    return;
+  }
+  placeSaveBtn.disabled = true;
+  placeError.textContent = "";
+  try {
+    let pid = activePlace.id;
+    if (activePlace.isNew) {
+      const { data, error } = await supabaseClient
+        .from("places")
+        .insert({ user_id: currentUser.id, name, lng: activePlace.lng, lat: activePlace.lat, guide: placeGuide.value, photos: [] })
+        .select()
+        .single();
+      if (error) throw error;
+      pid = data.id;
+      activePlace.id = pid;
+      activePlace.isNew = false;
+    } else {
+      const { error } = await supabaseClient
+        .from("places")
+        .update({ name, guide: placeGuide.value })
+        .eq("id", pid);
+      if (error) throw error;
+    }
+
+    // 上传新图片到 Storage
+    for (const f of pendingFiles) {
+      const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${currentUser.id}/${pid}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabaseClient.storage.from("place-photos").upload(path, f);
+      if (upErr) throw upErr;
+      const { data: pub } = supabaseClient.storage.from("place-photos").getPublicUrl(path);
+      activePlace.photos.push(pub.publicUrl);
+    }
+    pendingFiles = [];
+
+    // 删除被移除的图片文件
+    for (const url of activePlace.removedPhotos) {
+      const path = decodeURIComponent(url.split("/place-photos/")[1] || "");
+      if (path) await supabaseClient.storage.from("place-photos").remove([path]);
+    }
+    activePlace.removedPhotos = [];
+
+    const { error: phErr } = await supabaseClient
+      .from("places")
+      .update({ photos: activePlace.photos })
+      .eq("id", pid);
+    if (phErr) throw phErr;
+
+    const saved = { id: pid, user_id: currentUser.id, name, lng: activePlace.lng, lat: activePlace.lat, guide: placeGuide.value, photos: activePlace.photos };
+    updatePlacesAfterSave(saved);
+    renderPhotoGrid();
+    placeError.classList.add("ok");
+    placeError.textContent = "已保存 ✓";
+  } catch (e) {
+    placeError.textContent = "保存失败：" + extractErrMsg(e);
+  } finally {
+    placeSaveBtn.disabled = false;
+  }
+});
+
+placeDeleteBtn.addEventListener("click", async () => {
+  if (!activePlace || !confirm(`确定删除「${activePlace.name}」吗？其攻略和图片也会删除。`)) return;
+  placeDeleteBtn.disabled = true;
+  try {
+    // 先删云端图片文件
+    for (const url of activePlace.photos) {
+      const path = decodeURIComponent(url.split("/place-photos/")[1] || "");
+      if (path) await supabaseClient.storage.from("place-photos").remove([path]);
+    }
+    const { error } = await supabaseClient.from("places").delete().eq("id", activePlace.id);
+    if (error) throw error;
+    places = places.filter((p) => p.id !== activePlace.id);
+    renderMarkers();
+    renderPlaceList();
+    closePlaceEditor();
+  } catch (e) {
+    placeError.textContent = "删除失败：" + extractErrMsg(e);
+  } finally {
+    placeDeleteBtn.disabled = false;
+  }
 });
 
 // ===== 全局快捷键 =====

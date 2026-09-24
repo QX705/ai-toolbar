@@ -39,3 +39,34 @@ create policy "用户管理自己的笔记" on public.notes
   for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- 4. 地点表：地图上标记的地点 + 攻略 + 图片链接
+create table if not exists public.places (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  name       text not null,
+  lng        double precision not null,
+  lat        double precision not null,
+  guide      text not null default '',
+  photos     text[] not null default '{}',
+  created_at timestamptz not null default now()
+);
+
+alter table public.places enable row level security;
+
+drop policy if exists "用户管理自己的地点" on public.places;
+create policy "用户管理自己的地点" on public.places
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- 5. 图片存储桶（公开读、仅本人写自己文件夹）
+insert into storage.buckets (id, name, public)
+values ('place-photos', 'place-photos', true)
+on conflict (id) do nothing;
+
+drop policy if exists "用户管理自己的景点图片" on storage.objects;
+create policy "用户管理自己的景点图片" on storage.objects
+  for all
+  using (bucket_id = 'place-photos' and auth.uid()::text = (storage.foldername(name))[1])
+  with check (bucket_id = 'place-photos' and auth.uid()::text = (storage.foldername(name))[1]);

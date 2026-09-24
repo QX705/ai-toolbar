@@ -44,14 +44,41 @@
   <section class="map-panel" id="mapPanel" hidden>
     <div class="container">
       <div class="notes-head">
-        <strong>🗺️ 地图</strong>
+        <strong>🗺️ 地图 · 旅行攻略</strong>
         <span id="mapStatus" class="note-status"></span>
       </div>
       <div class="map-search-row">
-        <input id="mapSearch" placeholder="搜索地点，如：西湖、北京站、嘉立创..." autocomplete="off" />
+        <input id="mapSearch" placeholder="搜索地点/景区，选中后可写攻略..." autocomplete="off" />
         <button id="mapLocate" class="btn btn-ghost" type="button">📍 我的定位</button>
       </div>
-      <div id="mapContainer" class="map-container"></div>
+      <div class="map-layout">
+        <div id="mapContainer" class="map-container"></div>
+        <aside class="place-sidebar">
+          <div id="placeEditor" hidden>
+            <label class="field">
+              <span>地点名称</span>
+              <input id="placeName" maxlength="30" placeholder="如：西湖景区" />
+            </label>
+            <label class="field">
+              <span>攻略</span>
+              <textarea id="placeGuide" rows="6" placeholder="写点什么：交通、门票、最佳时间、玩法建议..."></textarea>
+            </label>
+            <div class="field">
+              <span>当地图片</span>
+              <label for="placePhotoInput" class="photo-add">＋ 添加图片</label>
+              <input id="placePhotoInput" type="file" accept="image/*" multiple hidden />
+              <div id="photoGrid" class="photo-grid"></div>
+            </div>
+            <p class="form-error" id="placeError"></p>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-ghost" id="placeDeleteBtn" hidden>删除</button>
+              <button type="button" class="btn btn-primary" id="placeSaveBtn">保存</button>
+            </div>
+          </div>
+          <div id="placeList" class="place-list"></div>
+          <p class="place-hint" id="placeHint">点击地图任意位置，或搜索选中一个地点/景区，即可为它写攻略、传照片</p>
+        </aside>
+      </div>
     </div>
   </section>
 
@@ -151,7 +178,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=18"></script>
-  <script src="js/main.js?v=18"></script>
+  <script src="js/config.js?v=19"></script>
+  <script src="js/main.js?v=19"></script>
 </body>
 </html>
