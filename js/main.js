@@ -826,17 +826,31 @@ function setMapStatus(text) {
 
 function loadAmapScript() {
   return new Promise((resolve, reject) => {
-    if (window.AMap) return resolve();
+    if (window.AMap && window.AMap.Map) return resolve();
     // 安全密钥必须在 SDK 加载前配置
     window._AMapSecurityConfig = { securityJsCode: AMAP_SECURITY_CODE.trim() };
     const s = document.createElement("script");
     s.src = "https://webapi.amap.com/maps?v=2.0&key=" + encodeURIComponent(AMAP_KEY.trim()) +
       "&plugin=AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation,AMap.Scale";
-    s.onload = resolve;
+    s.onload = () => {
+      // 加载器是异步的：onload 后 AMap 可能还没挂载完成，轮询等它就绪（最多 10 秒）
+      let waited = 0;
+      const timer = setInterval(() => {
+        if (window.AMap && window.AMap.Map) {
+          clearInterval(timer);
+          resolve();
+        } else if (++waited > 100) {
+          clearInterval(timer);
+          reject(new Error("脚本加载失败"));
+        }
+      }, 100);
+    };
     s.onerror = () => reject(new Error("脚本加载失败"));
     document.head.appendChild(s);
   });
 }
+
+let mapRetryUsed = false;
 
 async function openMapPanel() {
   mapPanel.hidden = false;
@@ -892,6 +906,12 @@ async function openMapPanel() {
     }, 15000);
   } catch (e) {
     mapLoading = false;
+    // 首次失败自动重试一次（多为加载器异步就绪的时序问题）
+    if (!mapRetryUsed) {
+      mapRetryUsed = true;
+      setTimeout(openMapPanel, 1500);
+      return;
+    }
     const msg = (e.message || "").includes("AMap")
       ? "地图脚本加载异常：请检查 Key 是否正确、网络是否可达 webapi.amap.com"
       : "地图加载失败：" + (e.message || "请检查 Key 配置");
