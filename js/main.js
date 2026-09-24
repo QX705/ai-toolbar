@@ -206,7 +206,7 @@ function extractErrMsg(e) {
 }
 
 // ===== DOM 引用 =====
-const grid = document.getElementById("toolGrid");
+const toolSections = document.getElementById("toolSections");
 const categoryBar = document.getElementById("categoryBar");
 const emptyState = document.getElementById("emptyState");
 const searchInput = document.getElementById("searchInput");
@@ -272,71 +272,103 @@ function renderCategories() {
   });
 }
 
+function buildCard(tool) {
+  const card = document.createElement("div");
+  card.className = "tool-card";
+  card.title = tool.url;
+
+  // 点击卡片：新标签页打开网址
+  card.addEventListener("click", () => {
+    window.open(tool.url, "_blank", "noopener");
+  });
+
+  const initial = [...tool.name][0].toUpperCase();
+
+  card.innerHTML = `
+    <div class="tool-actions">
+      <button class="act-btn edit" title="编辑">✏️</button>
+      <button class="act-btn danger" title="删除">🗑️</button>
+    </div>
+    <div class="tool-head">
+      <div class="tool-avatar" style="background:${avatarColor(tool.name)}"><span class="avatar-letter">${initial}</span><img class="tool-icon" alt="" referrerpolicy="no-referrer"></div>
+      <div style="min-width:0">
+        <div class="tool-name">${escapeHtml(tool.name)}</div>
+        <div class="tool-domain">${escapeHtml(domainOf(tool.url))}</div>
+      </div>
+    </div>
+    <span class="tool-cat">${escapeHtml(tool.category)}</span>
+  `;
+
+  // 网站图标：逐个候选源尝试（8 秒超时强制换源），全部失败则保留字母头像
+  const iconImg = card.querySelector(".tool-icon");
+  const sources = iconSources(tool.url);
+  let sourceIdx = 0;
+  let iconTimer = null;
+  const tryNextSource = () => {
+    clearTimeout(iconTimer);
+    sourceIdx++;
+    if (sourceIdx < sources.length) {
+      iconImg.src = sources[sourceIdx];
+      iconTimer = setTimeout(tryNextSource, 8000);
+    } else {
+      iconImg.remove();
+    }
+  };
+  iconImg.addEventListener("load", () => { clearTimeout(iconTimer); iconImg.classList.add("loaded"); });
+  iconImg.addEventListener("error", tryNextSource);
+  if (sources.length > 0) {
+    iconImg.src = sources[0];
+    iconTimer = setTimeout(tryNextSource, 8000);
+  } else iconImg.remove();
+
+  // 编辑 / 删除（阻止冒泡，避免触发打开链接）
+  card.querySelector(".edit").addEventListener("click", (e) => {
+    e.stopPropagation();
+    openModal(tool);
+  });
+  card.querySelector(".danger").addEventListener("click", (e) => {
+    e.stopPropagation();
+    removeTool(tool);
+  });
+
+  return card;
+}
+
 function renderGrid() {
   const list = visibleTools();
-  grid.innerHTML = "";
+  const wrap = document.getElementById("toolSections");
+  wrap.innerHTML = "";
   emptyState.hidden = list.length > 0;
 
-  list.forEach((tool) => {
-    const card = document.createElement("div");
-    card.className = "tool-card";
-    card.title = tool.url;
+  // 按分类分组
+  const groups = new Map();
+  list.forEach((t) => {
+    const cat = t.category || "其他";
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat).push(t);
+  });
 
-    // 点击卡片：新标签页打开网址
-    card.addEventListener("click", () => {
-      window.open(tool.url, "_blank", "noopener");
-    });
+  // 按 CATEGORIES 定义的顺序输出分组，未定义的分类排最后
+  const ordered = [
+    ...CATEGORIES.filter((c) => groups.has(c)),
+    ...[...groups.keys()].filter((c) => !CATEGORIES.includes(c)),
+  ];
 
-    const initial = [...tool.name][0].toUpperCase();
+  ordered.forEach((cat) => {
+    const section = document.createElement("section");
+    section.className = "tool-section";
 
-    card.innerHTML = `
-      <div class="tool-actions">
-        <button class="act-btn edit" title="编辑">✏️</button>
-        <button class="act-btn danger" title="删除">🗑️</button>
-      </div>
-      <div class="tool-head">
-        <div class="tool-avatar" style="background:${avatarColor(tool.name)}"><span class="avatar-letter">${initial}</span><img class="tool-icon" alt="" referrerpolicy="no-referrer"></div>
-        <div style="min-width:0">
-          <div class="tool-name">${escapeHtml(tool.name)}</div>
-          <div class="tool-domain">${escapeHtml(domainOf(tool.url))}</div>
-        </div>
-      </div>
-      <span class="tool-cat">${escapeHtml(tool.category)}</span>
-    `;
+    const title = document.createElement("h2");
+    title.className = "section-title";
+    title.textContent = cat;
+    section.appendChild(title);
 
-    // 网站图标：逐个候选源尝试（8 秒超时强制换源），全部失败则保留字母头像
-    const iconImg = card.querySelector(".tool-icon");
-    const sources = iconSources(tool.url);
-    let sourceIdx = 0;
-    let iconTimer = null;
-    const tryNextSource = () => {
-      clearTimeout(iconTimer);
-      sourceIdx++;
-      if (sourceIdx < sources.length) {
-        iconImg.src = sources[sourceIdx];
-        iconTimer = setTimeout(tryNextSource, 8000);
-      } else {
-        iconImg.remove();
-      }
-    };
-    iconImg.addEventListener("load", () => { clearTimeout(iconTimer); iconImg.classList.add("loaded"); });
-    iconImg.addEventListener("error", tryNextSource);
-    if (sources.length > 0) {
-      iconImg.src = sources[0];
-      iconTimer = setTimeout(tryNextSource, 8000);
-    } else iconImg.remove();
+    const grid = document.createElement("div");
+    grid.className = "tool-grid";
+    groups.get(cat).forEach((tool) => grid.appendChild(buildCard(tool)));
+    section.appendChild(grid);
 
-    // 编辑 / 删除（阻止冒泡，避免触发打开链接）
-    card.querySelector(".edit").addEventListener("click", (e) => {
-      e.stopPropagation();
-      openModal(tool);
-    });
-    card.querySelector(".danger").addEventListener("click", (e) => {
-      e.stopPropagation();
-      removeTool(tool);
-    });
-
-    grid.appendChild(card);
+    wrap.appendChild(section);
   });
 }
 
