@@ -21,5 +21,5 @@ const SUPABASE_ANON_KEY = "sb_publishable_m1BddNDAzcy9gBVIGA8C-Q_f_aTAw2X";
 //   3. 服务平台一定要选「Web端(JS API)」
 //   4. 创建后得到 Key 和配对的「安全密钥 jscode」，分别填到下面
 // 都填好后，顶栏会出现「地图」按钮；留空则不显示该功能。
-const AMAP_KEY = "";
-const AMAP_SECURITY_CODE = "";
+const AMAP_KEY = "f3273bf8b8c868d7981f63294b311ade";
+const AMAP_SECURITY_CODE = "438cb157a3e7d2f70692a2be37527584";

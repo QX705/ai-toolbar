@@ -846,6 +846,7 @@ async function openMapPanel() {
   setMapStatus("正在加载地图…");
   try {
     await loadAmapScript();
+    let hadError = false;
 
     amapMap = new AMap.Map("mapContainer", {
       zoom: 11,
@@ -870,21 +871,23 @@ async function openMapPanel() {
       setMapStatus(poi.name ? "已定位：" + poi.name : "已定位");
     });
 
+    // error 事件可能只是个别瓦片失败，不代表地图不可用：
+    // 记录但不立即报错，由 complete 或 15 秒兜底给出最终结论
+    amapMap.on("error", () => { hadError = true; });
+
     amapMap.on("complete", () => {
       mapReady = true;
       mapLoading = false;
       setMapStatus("");
     });
-    amapMap.on("error", () => {
-      mapLoading = false;
-      setMapStatus("地图加载失败：请检查 Key 和安全密钥是否配对");
-    });
 
-    // 兜底：15 秒仍未就绪视为失败
+    // 兜底：15 秒仍未就绪才视为真正失败
     setTimeout(() => {
       if (!mapReady) {
         mapLoading = false;
-        setMapStatus("地图加载超时：请检查 Key / 安全密钥 / 网络");
+        setMapStatus(hadError
+          ? "地图加载失败：请检查 Key 和安全密钥是否配对"
+          : "地图加载超时：请检查网络");
       }
     }, 15000);
   } catch (e) {
