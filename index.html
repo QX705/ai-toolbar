@@ -16,7 +16,6 @@
         <svg viewBox="0 0 24 24" class="icon-search"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="searchInput" type="text" placeholder="搜索工具名称或网址..." autocomplete="off" />
       </div>
-      <button id="addBtn" class="btn btn-primary">＋ 添加工具</button>
       <div class="user-area" id="userArea" hidden>
         <!-- 未登录 -->
         <button id="loginBtn" class="btn btn-primary">登录 / 注册</button>
@@ -57,11 +56,12 @@
   </section>
 
   <main class="container">
-    <!-- 控制条：分类下拉 + 笔记 / 地图 -->
+    <!-- 控制条：分类下拉 + 笔记 / 地图 + 添加工具 -->
     <div class="control-bar">
       <select id="categorySelect" aria-label="选择分类"></select>
       <button id="notesToggle" class="btn btn-ghost" type="button">📝 笔记</button>
       <button id="mapToggle" class="btn btn-ghost" type="button" hidden>🗺️ 地图</button>
+      <button id="addBtn" class="btn btn-primary" type="button">＋ 添加工具</button>
     </div>
 
     <!-- 工具卡片（按分类分组） -->
@@ -151,7 +151,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=14"></script>
-  <script src="js/main.js?v=14"></script>
+  <script src="js/config.js?v=15"></script>
+  <script src="js/main.js?v=15"></script>
 </body>
 </html>
