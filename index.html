@@ -41,9 +41,10 @@
   </section>
 
   <main class="container">
-    <!-- 控制条：分类下拉 + 笔记 + 添加工具 -->
+    <!-- 控制条：分类下拉 + 地图/笔记 + 添加工具 -->
     <div class="control-bar">
       <select id="categorySelect" aria-label="选择分类"></select>
+      <button id="mapJump" class="btn btn-ghost" type="button" hidden title="跳转到地图">🗺️</button>
       <button id="notesToggle" class="btn btn-ghost" type="button">📝 笔记</button>
       <button id="addBtn" class="btn btn-primary" type="button">＋ 添加工具</button>
     </div>
@@ -175,7 +176,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=24"></script>
-  <script src="js/main.js?v=24" type="module"></script>
+  <script src="js/config.js?v=25"></script>
+  <script src="js/main.js?v=25" type="module"></script>
 </body>
 </html>
