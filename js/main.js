@@ -180,8 +180,8 @@ function iconSources(url) {
   }
   return [
     origin + "/favicon.ico",
-    "https://api.iowen.cn/favicon/" + host + ".png",
     "https://favicon.im/" + host + "?larger=true",
+    "https://api.iowen.cn/favicon/" + host + ".png",
   ];
 }
 
@@ -295,7 +295,7 @@ function renderGrid() {
         <button class="act-btn danger" title="删除">🗑️</button>
       </div>
       <div class="tool-head">
-        <div class="tool-avatar" style="background:${avatarColor(tool.name)}"><span class="avatar-letter">${initial}</span><img class="tool-icon" alt="" loading="lazy" referrerpolicy="no-referrer"></div>
+        <div class="tool-avatar" style="background:${avatarColor(tool.name)}"><span class="avatar-letter">${initial}</span><img class="tool-icon" alt="" referrerpolicy="no-referrer"></div>
         <div style="min-width:0">
           <div class="tool-name">${escapeHtml(tool.name)}</div>
           <div class="tool-domain">${escapeHtml(domainOf(tool.url))}</div>
