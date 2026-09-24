@@ -47,7 +47,7 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  height: 64px;
+  height: 76px;
 }
 
 .brand {
@@ -131,7 +131,7 @@ body {
 /* ===== 主体 ===== */
 main {
   flex: 1;
-  padding: 28px 0 48px;
+  padding: 36px 0 48px;
 }
 
 /* ===== 分类栏 ===== */
@@ -139,9 +139,9 @@ main {
 .control-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  margin: 12px 0 36px;
 }
 
 .control-bar select {
