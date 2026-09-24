@@ -297,6 +297,22 @@ main {
   color: #9ca3af;
 }
 
+.reset-link {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 6px;
+  transition: color 0.2s;
+}
+
+.reset-link:hover {
+  color: var(--danger);
+}
+
 /* ===== 弹窗 ===== */
 .modal-mask {
   position: fixed;

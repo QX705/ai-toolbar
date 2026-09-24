@@ -8,7 +8,7 @@
 const STORAGE_KEY = "ai-toolbar-tools";
 const NOTE_KEY = "ai-toolbar-note";
 
-const CATEGORIES = ["AI工具", "编程开发", "图标制作", "学习插件", "其他"];
+const CATEGORIES = ["AI工具", "编程开发", "图标制作", "学习插件", "游戏官网", "其他"];
 
 // 预置工具（未登录时的默认列表，登录后首次同步会复制到你的云端账号）
 const DEFAULT_TOOLS = [
@@ -16,14 +16,14 @@ const DEFAULT_TOOLS = [
     { id: 1,  name: "豆包",                 url: "https://www.doubao.com",                        category: "AI工具" },
     { id: 2,  name: "deepseek",             url: "https://chat.deepseek.com",                    category: "AI工具" },
     { id: 3,  name: "即梦",                 url: "https://jimeng.jianying.com",                   category: "AI工具" },
-    { id: 4,  name: "智谱",                 url: "http://zcode.z.ai/cn",                          category: "AI工具" },
+    { id: 4,  name: "智谱",                 url: "https://zcode.z.ai/cn",                         category: "AI工具" },
 
     // 编程开发工具
     { id: 5,  name: "力扣",                 url: "https://leetcode.cn",                            category: "编程开发" },
     { id: 6,  name: "牛客网",               url: "https://www.nowcoder.com",                       category: "编程开发" },
     { id: 7,  name: "CSDN",                 url: "https://www.csdn.net",                           category: "编程开发" },
     { id: 8,  name: "GitHub",               url: "https://github.com",                             category: "编程开发" },
-    { id: 9,  name: "Qt center",            url: "http://download.qt.io",                          category: "编程开发" },
+    { id: 9,  name: "Qt center",            url: "https://download.qt.io",                         category: "编程开发" },
     { id: 10, name: "嘉立创EDA客户中心",     url: "https://member.jlc.com",                          category: "编程开发" },
 
     // 图标制作
@@ -34,7 +34,7 @@ const DEFAULT_TOOLS = [
     { id: 13, name: "软仓",                 url: "https://ruancang.net",                            category: "学习插件" },
     { id: 14, name: "凹凸工坊",             url: "https://www.autohanding.com",                     category: "学习插件" },
     { id: 15, name: "iLovePDF",             url: "https://www.ilovepdf.com",                        category: "学习插件" },
-    { id: 16, name: "TinyPNG",              url: "http://timypng.com",                               category: "学习插件" },
+    { id: 16, name: "TinyPNG",              url: "https://tinypng.com",                              category: "学习插件" },
     
     // 游戏官网（Mod）
     { id: 17, name: "人类一败涂地",         url: "https://gaming.lenovo.com/human-fall-flat",         category: "游戏官网" },
@@ -648,6 +648,37 @@ async function syncOnLogin() {
 
 // ===== 启动云端（异步，不阻塞本地功能） =====
 initCloud();
+
+// ===== 恢复默认工具列表 =====
+// 浏览器里存过旧列表时会遮住代码里的 DEFAULT_TOOLS，用它一键刷回默认
+document.getElementById("resetBtn").addEventListener("click", async () => {
+  if (!confirm("确定恢复默认工具列表吗？当前列表（含你自己添加的）会被覆盖。")) return;
+
+  if (currentUser && supabaseClient) {
+    // 登录中：同步删掉云端全部工具，再上传默认列表
+    try {
+      const ids = tools.map((t) => t.id);
+      if (ids.length > 0) {
+        const { error } = await supabaseClient.from("tools").delete().in("id", ids);
+        if (error) throw error;
+      }
+      const rows = DEFAULT_TOOLS.map((t, i) => ({ name: t.name, url: t.url, category: t.category, sort: i }));
+      const { data, error } = await supabaseClient.from("tools").insert(rows).select();
+      if (error) throw error;
+      tools = data;
+    } catch (e) {
+      alert("恢复失败：" + extractErrMsg(e));
+      return;
+    }
+  } else {
+    tools = [...DEFAULT_TOOLS];
+  }
+
+  saveTools();
+  activeCategory = "全部";
+  renderCategories();
+  renderGrid();
+});
 
 // ===== 全局快捷键 =====
 window.addEventListener("keydown", (e) => {
