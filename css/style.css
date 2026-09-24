@@ -135,34 +135,38 @@ main {
 }
 
 /* ===== 分类栏 ===== */
-.category-bar {
+/* ===== 控制条：分类下拉 + 笔记/地图 ===== */
+.control-bar {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 24px;
 }
 
-.chip {
-  padding: 7px 18px;
-  border-radius: 999px;
+.control-bar select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 9px 38px 9px 16px;
   border: 1px solid var(--border);
-  background: #fff;
-  color: var(--text-light);
-  font-size: 0.9rem;
+  border-radius: 999px;
+  background: #fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 15px center;
+  font-size: 0.92rem;
   font-family: inherit;
+  font-weight: 600;
+  color: var(--text);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.chip:hover {
-  color: var(--primary);
+.control-bar select:hover {
   border-color: var(--primary);
 }
 
-.chip.active {
-  background: var(--primary);
+.control-bar select:focus {
+  outline: none;
   border-color: var(--primary);
-  color: #fff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 /* ===== 工具网格 ===== */

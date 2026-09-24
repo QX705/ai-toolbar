@@ -207,7 +207,7 @@ function extractErrMsg(e) {
 
 // ===== DOM 引用 =====
 const toolSections = document.getElementById("toolSections");
-const categoryBar = document.getElementById("categoryBar");
+const categorySelect = document.getElementById("categorySelect");
 const emptyState = document.getElementById("emptyState");
 const searchInput = document.getElementById("searchInput");
 
@@ -258,19 +258,20 @@ function visibleTools() {
 }
 
 function renderCategories() {
-  categoryBar.innerHTML = "";
+  categorySelect.innerHTML = "";
   ["全部", ...CATEGORIES].forEach((cat) => {
-    const btn = document.createElement("button");
-    btn.className = "chip" + (cat === activeCategory ? " active" : "");
-    btn.textContent = cat;
-    btn.addEventListener("click", () => {
-      activeCategory = cat;
-      renderCategories();
-      renderGrid();
-    });
-    categoryBar.appendChild(btn);
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    opt.selected = cat === activeCategory;
+    categorySelect.appendChild(opt);
   });
 }
+
+categorySelect.addEventListener("change", () => {
+  activeCategory = categorySelect.value;
+  renderGrid();
+});
 
 function buildCard(tool) {
   const card = document.createElement("div");
