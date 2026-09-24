@@ -345,7 +345,7 @@ async function addTool(name, url, category) {
   if (currentUser && supabaseClient) {
     const { data, error } = await supabaseClient
       .from("tools")
-      .insert({ name, url, category, sort: tools.length })
+      .insert({ user_id: currentUser.id, name, url, category, sort: tools.length })
       .select()
       .single();
     if (error) throw error;
@@ -693,13 +693,13 @@ async function syncOnLogin() {
 
   if (cloud.length === 0 && tools.length > 0) {
     // 2. 云端为空：把当前本地列表（含自定义）整体上传
-    const rows = tools.map((t, i) => ({ name: t.name, url: t.url, category: t.category, sort: i }));
+    const rows = tools.map((t, i) => ({ user_id: currentUser.id, name: t.name, url: t.url, category: t.category, sort: i }));
     tools = await uploadRows(rows);
   } else if (cloud.length > 0) {
     // 3. 合并：本地有、云端没有的上传；结果以云端为准
     const extra = tools.filter((t) => !cloudKeys.has(normUrlKey(t.url)));
     if (extra.length > 0) {
-      const rows = extra.map((t, i) => ({ name: t.name, url: t.url, category: t.category, sort: cloud.length + i }));
+      const rows = extra.map((t, i) => ({ user_id: currentUser.id, name: t.name, url: t.url, category: t.category, sort: cloud.length + i }));
       const inserted = await uploadRows(rows);
       cloud.push(...inserted);
     }
@@ -744,7 +744,7 @@ document.getElementById("resetBtn").addEventListener("click", async () => {
         const { error } = await supabaseClient.from("tools").delete().in("id", ids);
         if (error) throw error;
       }
-      const rows = DEFAULT_TOOLS.map((t, i) => ({ name: t.name, url: t.url, category: t.category, sort: i }));
+      const rows = DEFAULT_TOOLS.map((t, i) => ({ user_id: currentUser.id, name: t.name, url: t.url, category: t.category, sort: i }));
       const { data, error } = await supabaseClient.from("tools").insert(rows).select();
       if (error) throw error;
       tools = data;
