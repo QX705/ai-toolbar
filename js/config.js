@@ -11,5 +11,5 @@
 // anon key 是公开密钥，放在前端是安全的（数据受 RLS 保护）。
 // =========================================================
 
-const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+const SUPABASE_URL = "https://saoxclysufugrqutaqny.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_m1BddNDAzcy9gBVIGA8C-Q_f_aTAw2X";
