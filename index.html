@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 工具栏</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- 顶栏：标题 + 搜索 + 添加 -->
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">🤖 <span>AI 工具栏</span></div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" class="icon-search"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="searchInput" type="text" placeholder="搜索工具名称或网址..." autocomplete="off" />
+      </div>
+      <button id="addBtn" class="btn btn-primary">＋ 添加工具</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 分类筛选 -->
+    <nav class="category-bar" id="categoryBar"></nav>
+
+    <!-- 工具卡片 -->
+    <div class="tool-grid" id="toolGrid"></div>
+
+    <!-- 空状态 -->
+    <div class="empty-state" id="emptyState" hidden>
+      <p class="empty-icon">📭</p>
+      <p>没有找到工具</p>
+      <p class="empty-tip">试试其他关键词，或点击右上角「添加工具」</p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>链接保存在本浏览器（localStorage）中，仅你的电脑可见；清除浏览器数据前请自行备份。</p>
+  </footer>
+
+  <!-- 添加 / 编辑 弹窗 -->
+  <div class="modal-mask" id="modalMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3 id="modalTitle">添加工具</h3>
+      <form id="toolForm" autocomplete="off">
+        <label class="field">
+          <span>工具名称</span>
+          <input id="toolName" required maxlength="20" placeholder="例如：通义千问" />
+        </label>
+        <label class="field">
+          <span>网址</span>
+          <input id="toolUrl" required placeholder="例如：https://tongyi.aliyun.com" />
+        </label>
+        <label class="field">
+          <span>分类</span>
+          <select id="toolCategory"></select>
+        </label>
+        <p class="form-error" id="formError"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="cancelBtn">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
