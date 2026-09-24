@@ -40,12 +40,12 @@ const DEFAULT_TOOLS = [
     { id: 17, name: "人类一败涂地",         url: "https://gaming.lenovo.com/human-fall-flat",         category: "游戏官网" },
     { id: 18, name: "科雷",                 url: "https://accounts.klei.com",                         category: "游戏官网" },
     { id: 19, name: "BongoCat_Mod",         url: "https://xv40.lanzouu.com/b0fpy9v9e",                category: "游戏官网" },
-    
+    { id: 20, name: "Steam",                url: "https://store.steampowered.com",                   category: "游戏官网" },
     // 其他
-    { id: 20, name: "金数据",               url: "https://jinshuju.net",                             category: "其他" },
-    { id: 21, name: "Supabase",             url: "https://supabase.com",                             category: "其他" },
-    { id: 22, name: "全民简历",             url: "https://www.qmjianli.com",                        category: "其他" },
-    { id: 23, name: "Maker World",          url: "https://makerworld.com.cn",                        category: "其他" },
+    { id: 21, name: "金数据",               url: "https://jinshuju.net",                             category: "其他" },
+    { id: 22, name: "Supabase",             url: "https://supabase.com",                             category: "其他" },
+    { id: 23, name: "全民简历",             url: "https://www.qmjianli.com",                        category: "其他" },
+    { id: 24, name: "Maker World",          url: "https://makerworld.com.cn",                        category: "其他" },
 ];
 
 // ===== 云端初始化（config.js 未填 key 时自动退回纯本地模式） =====
@@ -722,14 +722,22 @@ async function syncOnLogin() {
   if (error) throw error;
 
   const cloudKeys = new Set(cloud.map((t) => normUrlKey(t.url)));
+  const localKeys = new Set(tools.map((t) => normUrlKey(t.url)));
 
-  if (cloud.length === 0 && tools.length > 0) {
-    // 2. 云端为空：把当前本地列表（含自定义）整体上传
-    const rows = tools.map((t, i) => ({ user_id: currentUser.id, name: t.name, url: t.url, category: t.category, sort: i }));
+  // 代码 DEFAULT_TOOLS 里新增的工具（本地和云端都没有的）自动合并进列表，
+  // 这样在代码里加了新工具并推送后，所有登录用户下次打开就会自动获得
+  const newDefaults = DEFAULT_TOOLS.filter(
+    (t) => !localKeys.has(normUrlKey(t.url)) && !cloudKeys.has(normUrlKey(t.url))
+  );
+  const base = tools.concat(newDefaults);
+
+  if (cloud.length === 0 && base.length > 0) {
+    // 2. 云端为空：把「本地列表 + 代码新增默认工具」整体上传
+    const rows = base.map((t, i) => ({ user_id: currentUser.id, name: t.name, url: t.url, category: t.category, sort: i }));
     tools = await uploadRows(rows);
   } else if (cloud.length > 0) {
-    // 3. 合并：本地有、云端没有的上传；结果以云端为准
-    const extra = tools.filter((t) => !cloudKeys.has(normUrlKey(t.url)));
+    // 3. 合并：本地/代码有、云端没有的上传；结果以云端为准
+    const extra = base.filter((t) => !cloudKeys.has(normUrlKey(t.url)));
     if (extra.length > 0) {
       const rows = extra.map((t, i) => ({ user_id: currentUser.id, name: t.name, url: t.url, category: t.category, sort: cloud.length + i }));
       const inserted = await uploadRows(rows);
