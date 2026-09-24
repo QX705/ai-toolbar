@@ -43,8 +43,8 @@ const DEFAULT_TOOLS = [
     //其他
     { id: 20, name: "金数据",              url: "https://jinshuju.net",                             category: "其他" },
     { id: 21, name: "Supabase",            url: "https://supabase.com",                             category: "其他" },
-    { id: 22, name: "全民简历",             url: "https://www.qmjianli.com",                        category: "学习插件" },
-    { id: 23, name: "Maker World",         url: "https://makerworld.com.cn",                        category: "学习插件" },
+    { id: 22, name: "全民简历",             url: "https://www.qmjianli.com",                        category: "其他" },
+    { id: 23, name: "Maker World",         url: "https://makerworld.com.cn",                        category: "其他" },
 ];
 
 // ===== 云端初始化（config.js 未填 key 时自动退回纯本地模式） =====
