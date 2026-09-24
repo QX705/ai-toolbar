@@ -372,6 +372,118 @@ main {
   gap: 10px;
 }
 
+/* ===== 账号区域 ===== */
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-area[hidden] {
+  display: none;
+}
+
+#userChip[hidden] {
+  display: none;
+}
+
+#loginBtn[hidden] {
+  display: none;
+}
+
+.user-email {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  color: var(--text-light);
+}
+
+/* ===== 登录弹窗切换标签 ===== */
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 9px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.92rem;
+  font-family: inherit;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.form-error.ok {
+  color: #059669;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== 笔记面板 ===== */
+.notes-panel {
+  background: #fffdf5;
+  border-bottom: 1px solid #f1e9c9;
+  padding: 18px 0;
+}
+
+.notes-panel[hidden] {
+  display: none;
+}
+
+.notes-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.note-status {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+#noteText {
+  width: 100%;
+  min-height: 150px;
+  padding: 14px 16px;
+  border: 1px solid #e8e0c0;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-family: inherit;
+  line-height: 1.7;
+  background: #fffef9;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#noteText:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+#notesToggle.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
 /* ===== 响应式 ===== */
 @media (max-width: 640px) {
   .topbar-inner {

@@ -8,7 +8,7 @@
 </head>
 <body>
 
-  <!-- 顶栏：标题 + 搜索 + 添加 -->
+  <!-- 顶栏：标题 + 搜索 + 笔记 + 添加 + 账号 -->
   <header class="topbar">
     <div class="container topbar-inner">
       <div class="brand">🤖 <span>AI 工具栏</span></div>
@@ -16,9 +16,31 @@
         <svg viewBox="0 0 24 24" class="icon-search"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="searchInput" type="text" placeholder="搜索工具名称或网址..." autocomplete="off" />
       </div>
+      <button id="notesToggle" class="btn btn-ghost">📝 笔记</button>
       <button id="addBtn" class="btn btn-primary">＋ 添加工具</button>
+      <div class="user-area" id="userArea" hidden>
+        <!-- 未登录 -->
+        <button id="loginBtn" class="btn btn-primary">登录 / 注册</button>
+        <!-- 已登录 -->
+        <span id="userChip" hidden>
+          <span id="userEmail" class="user-email" title=""></span>
+          <button id="changePwBtn" class="btn btn-ghost">修改密码</button>
+          <button id="logoutBtn" class="btn btn-ghost">退出</button>
+        </span>
+      </div>
     </div>
   </header>
+
+  <!-- 笔记面板 -->
+  <section class="notes-panel" id="notesPanel" hidden>
+    <div class="container">
+      <div class="notes-head">
+        <strong>我的笔记</strong>
+        <span id="noteStatus" class="note-status"></span>
+      </div>
+      <textarea id="noteText" placeholder="随手记点什么…输入后自动保存"></textarea>
+    </div>
+  </section>
 
   <main class="container">
     <!-- 分类筛选 -->
@@ -36,7 +58,7 @@
   </main>
 
   <footer class="footer">
-    <p>链接保存在本浏览器（localStorage）中，仅你的电脑可见；清除浏览器数据前请自行备份。</p>
+    <p>未登录时，链接和笔记保存在本浏览器中；登录后自动同步到云端，换设备也不丢。</p>
   </footer>
 
   <!-- 添加 / 编辑 弹窗 -->
@@ -59,12 +81,58 @@
         <p class="form-error" id="formError"></p>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="cancelBtn">取消</button>
-          <button type="submit" class="btn btn-primary">保存</button>
+          <button type="submit" class="btn btn-primary" id="saveToolBtn">保存</button>
         </div>
       </form>
     </div>
   </div>
 
-  <script src="js/main.js"></script>
+  <!-- 登录 / 注册 弹窗 -->
+  <div class="modal-mask" id="authMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3 id="authTitle">登录</h3>
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tabLogin">登录</button>
+        <button type="button" class="auth-tab" id="tabRegister">注册</button>
+      </div>
+      <form id="authForm" autocomplete="off">
+        <label class="field">
+          <span>邮箱</span>
+          <input id="authEmail" type="email" required placeholder="you@example.com" />
+        </label>
+        <label class="field">
+          <span>密码</span>
+          <input id="authPassword" type="password" required minlength="6" placeholder="至少 6 位" />
+        </label>
+        <p class="form-error" id="authError"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="authCancel">取消</button>
+          <button type="submit" class="btn btn-primary" id="authSubmit">登录</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 修改密码 弹窗 -->
+  <div class="modal-mask" id="pwMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>修改密码</h3>
+      <form id="pwForm" autocomplete="off">
+        <label class="field">
+          <span>新密码</span>
+          <input id="pwNew" type="password" required minlength="6" placeholder="至少 6 位" />
+        </label>
+        <p class="form-error" id="pwError"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="pwCancel">取消</button>
+          <button type="submit" class="btn btn-primary">保存新密码</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
+  <script src="js/config.js?v=2"></script>
+  <script src="js/main.js?v=2"></script>
 </body>
 </html>

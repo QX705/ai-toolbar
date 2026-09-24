@@ -1,32 +1,101 @@
 // =========================================================
-// AI 工具栏 —— 数据与逻辑
-// 工具数据保存在浏览器 localStorage，键名 ai-toolbar-tools
+// AI 工具栏 —— 数据、账号与云端同步逻辑
+// 未登录：数据存浏览器 localStorage
+// 登录后：工具与笔记同步到 Supabase，换设备不丢
+// 注意：SDK 全局变量叫 supabase（var 声明），这里必须用别的名字
 // =========================================================
 
 const STORAGE_KEY = "ai-toolbar-tools";
+const NOTE_KEY = "ai-toolbar-note";
 
-const CATEGORIES = ["对话助手", "图像创作", "编程开发", "办公学习", "其他"];
+const CATEGORIES = ["AI工具", "编程开发", "图标制作", "学习插件", "其他"];
 
-// 预置工具（可在页面上编辑或删除）
+// 预置工具（未登录时的默认列表，登录后首次同步会复制到你的云端账号）
 const DEFAULT_TOOLS = [
-  { id: 1,  name: "DeepSeek",     url: "https://chat.deepseek.com",      category: "对话助手" },
-  { id: 2,  name: "Kimi",         url: "https://kimi.moonshot.cn",       category: "对话助手" },
-  { id: 3,  name: "通义千问",      url: "https://tongyi.aliyun.com",      category: "对话助手" },
-  { id: 4,  name: "豆包",          url: "https://www.doubao.com",         category: "对话助手" },
-  { id: 5,  name: "智谱清言",      url: "https://chatglm.cn",             category: "对话助手" },
-  { id: 6,  name: "ChatGPT",      url: "https://chat.openai.com",        category: "对话助手" },
-  { id: 7,  name: "Claude",       url: "https://claude.ai",              category: "对话助手" },
-  { id: 8,  name: "即梦",          url: "https://jimeng.jianying.com",    category: "图像创作" },
-  { id: 9,  name: "Midjourney",   url: "https://www.midjourney.com",     category: "图像创作" },
-  { id: 10, name: "LiblibAI",     url: "https://www.liblib.art",         category: "图像创作" },
-  { id: 11, name: "Cursor",       url: "https://cursor.com",             category: "编程开发" },
-  { id: 12, name: "GitHub Copilot", url: "https://github.com/features/copilot", category: "编程开发" },
-  { id: 13, name: "v0",           url: "https://v0.dev",                 category: "编程开发" },
-  { id: 14, name: "Gamma",        url: "https://gamma.app",              category: "办公学习" },
-  { id: 15, name: "秘塔AI搜索",    url: "https://metaso.cn",              category: "办公学习" },
+    // AI 工具
+    { id: 1,  name: "豆包",                 url: "https://www.doubao.com",                        category: "AI工具" },
+    { id: 2,  name: "deepseek",             url: "https://chat.deepseek.com",                    category: "AI工具" },
+    { id: 3,  name: "即梦",                 url: "https://jimeng.jianying.com",                   category: "AI工具" },
+    { id: 4,  name: "智谱",                 url: "http://zcode.z.ai/cn",                          category: "AI工具" },
+
+    //编程开发工具
+    { id: 5,  name: "力扣",                 url: "https://leetcode.cn",                            category: "编程开发" },
+    { id: 6,  name: "牛客网",               url: "https://www.nowcoder.com",                       category: "编程开发" },
+    { id: 7,  name: "CSDN",                 url: "https://www.csdn.net",                           category: "编程开发" },
+    { id: 8,  name: "GitHub",               url: "https://github.com",                             category: "编程开发" },
+    { id: 9,  name: "Qt center",            url: "http://download.qt.io",                          category: "编程开发" },
+    { id: 10, name: "嘉立创EDA客户中心",     url: "https://member.jlc.com",                          category: "编程开发" },
+
+    //图标制作
+    { id: 11, name: "ICO图标生成",          url: "https://www.icoa.cc",                            category: "图标制作" },
+    { id: 12, name: "阿里巴巴矢量图",       url: "https://www.iconfont.cn",                         category: "图标制作" },
+
+    //学习插件
+    { id: 13, name: "软仓",                 url: "https://ruancang.net",                            category: "学习插件" },
+    { id: 14, name: "凹凸工坊",             url: "https://www.autohanding.com",                     category: "学习插件" },
+    { id: 15, name: "iLovePDF",             url: "https://www.ilovepdf.com",                        category: "学习插件" },
+    { id: 16, name: "TinyPNG",             url: "http://timypng.com",                               category: "学习插件" },
+    
+    //游戏官网（Mod)
+    { id: 17, name: "人类一败涂地",        url: "https://gaming.lenovo.com/human-fall-flat",         category: "学习插件" },
+    { id: 18, name: "科雷",                url: "https://accounts.klei.com",                         category: "学习插件" },
+    { id: 19, name: "BongoCat_Mod",       url: "https://xv40.lanzouu.com/b0fpy9v9e",                category: "学习插件" },
+    //其他
+    { id: 20, name: "金数据",              url: "https://jinshuju.net",                             category: "其他" },
+    { id: 21, name: "Supabase",            url: "https://supabase.com",                             category: "其他" },
+    { id: 22, name: "全民简历",             url: "https://www.qmjianli.com",                        category: "学习插件" },
+    { id: 23, name: "Maker World",         url: "https://makerworld.com.cn",                        category: "学习插件" },
 ];
 
-// ===== 数据读写 =====
+// ===== 云端初始化（config.js 未填 key 时自动退回纯本地模式） =====
+// SDK 按需异步加载：CDN 不通或超时不阻塞页面，照常本地使用
+let supabaseClient = null;   // Supabase 客户端，SDK 就绪后赋值
+let cloudReady = false;      // 云端功能是否可用
+
+const SUPABASE_CDNS = [
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm",
+  "https://esm.sh/@supabase/supabase-js@2",
+];
+
+function importWithTimeout(url, ms = 8000) {
+  return Promise.race([
+    import(url),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("SDK 加载超时")), ms)),
+  ]);
+}
+
+async function initCloud() {
+  if (typeof SUPABASE_URL !== "string" || !SUPABASE_URL.startsWith("https://")) return;
+  if (typeof SUPABASE_ANON_KEY !== "string" || SUPABASE_ANON_KEY.length <= 20) return;
+
+  let mod = null;
+  for (const url of SUPABASE_CDNS) {
+    try {
+      mod = await importWithTimeout(url);
+      break;
+    } catch (e) {
+      console.warn("Supabase SDK 加载失败，尝试下一个源：" + url);
+    }
+  }
+  if (!mod || typeof mod.createClient !== "function") {
+    console.warn("Supabase SDK 不可用（CDN 均失败），本次使用本地模式");
+    return;
+  }
+
+  supabaseClient = mod.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  cloudReady = true;
+  updateAuthUI();
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if ((event === "INITIAL_SESSION" || event === "SIGNED_IN") && session) {
+      handleSignedIn(session.user);
+    } else if (event === "SIGNED_OUT") {
+      handleSignedOut();
+    }
+  });
+}
+
+// ===== 数据读写（本地缓存层） =====
 function loadTools() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -45,7 +114,11 @@ function saveTools() {
 let tools = loadTools();
 let activeCategory = "全部";
 let keyword = "";
-let editingId = null; // 正在编辑的工具 id，null 表示新增
+let editingId = null;      // 正在编辑的工具 id，null 表示新增
+let currentUser = null;    // Supabase 登录用户
+let localBackup = null;    // 登录前的本地数据快照，退出登录时还原
+let authMode = "login";    // 登录弹窗当前模式
+let syncing = false;
 
 // ===== 工具函数 =====
 // 根据名称生成稳定的头像底色
@@ -68,6 +141,10 @@ function domainOf(url) {
   }
 }
 
+function normUrlKey(url) {
+  return url.replace(/\/+$/, "").toLowerCase();
+}
+
 // 补全协议并校验网址，非法时返回 null
 function normalizeUrl(input) {
   let s = input.trim();
@@ -82,11 +159,72 @@ function normalizeUrl(input) {
   }
 }
 
-// ===== 渲染 =====
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// 把 Supabase 的报错翻译成中文
+function extractErrMsg(e) {
+  const raw = (e && (e.message || e.error_description || e.msg)) || String(e);
+  const map = [
+    ["Invalid login credentials", "邮箱或密码错误"],
+    ["Email not confirmed", "请先到邮箱点击确认链接，再回来登录"],
+    ["User already registered", "该邮箱已被注册，请直接登录"],
+    ["at least 6 characters", "密码至少 6 位"],
+    ["different from the old password", "新密码不能与旧密码相同"],
+    ["rate limit", "操作太频繁，请稍后再试"],
+    ["Failed to fetch", "无法连接云端服务，请检查网络"],
+    ["Invalid API key", "云端密钥配置错误（请检查 config.js 中的 anon key）"],
+    ["does not exist", "数据表不存在：请先在 Supabase SQL Editor 运行 supabase-setup.sql"],
+    ["row-level security", "权限不足：请确认已在 Supabase 运行 supabase-setup.sql"],
+    ["validated against", "邮箱格式不正确"],
+  ];
+  for (const [k, v] of map) if (raw && raw.includes(k)) return v;
+  return raw;
+}
+
+// ===== DOM 引用 =====
 const grid = document.getElementById("toolGrid");
 const categoryBar = document.getElementById("categoryBar");
 const emptyState = document.getElementById("emptyState");
+const searchInput = document.getElementById("searchInput");
 
+const userArea = document.getElementById("userArea");
+const loginBtn = document.getElementById("loginBtn");
+const userChip = document.getElementById("userChip");
+const userEmail = document.getElementById("userEmail");
+
+const notesPanel = document.getElementById("notesPanel");
+const notesToggle = document.getElementById("notesToggle");
+const noteText = document.getElementById("noteText");
+const noteStatus = document.getElementById("noteStatus");
+
+const modalMask = document.getElementById("modalMask");
+const modalTitle = document.getElementById("modalTitle");
+const toolForm = document.getElementById("toolForm");
+const toolName = document.getElementById("toolName");
+const toolUrl = document.getElementById("toolUrl");
+const toolCategory = document.getElementById("toolCategory");
+const formError = document.getElementById("formError");
+
+const authMask = document.getElementById("authMask");
+const authTitle = document.getElementById("authTitle");
+const authForm = document.getElementById("authForm");
+const authEmail = document.getElementById("authEmail");
+const authPassword = document.getElementById("authPassword");
+const authError = document.getElementById("authError");
+const authSubmit = document.getElementById("authSubmit");
+const tabLogin = document.getElementById("tabLogin");
+const tabRegister = document.getElementById("tabRegister");
+
+const pwMask = document.getElementById("pwMask");
+const pwForm = document.getElementById("pwForm");
+const pwNew = document.getElementById("pwNew");
+const pwError = document.getElementById("pwError");
+
+// ===== 渲染 =====
 function visibleTools() {
   return tools.filter((t) => {
     const matchCat = activeCategory === "全部" || t.category === activeCategory;
@@ -160,28 +298,53 @@ function renderGrid() {
   });
 }
 
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+// ===== 工具增删改（登录时同步云端） =====
+async function addTool(name, url, category) {
+  if (currentUser && supabaseClient) {
+    const { data, error } = await supabaseClient
+      .from("tools")
+      .insert({ name, url, category, sort: tools.length })
+      .select()
+      .single();
+    if (error) throw error;
+    tools.push(data);
+  } else {
+    tools.push({ id: Date.now(), name, url, category });
+  }
+  saveTools();
+}
+
+async function updateTool(tool, name, url, category) {
+  if (currentUser && supabaseClient) {
+    const { error } = await supabaseClient
+      .from("tools")
+      .update({ name, url, category })
+      .eq("id", tool.id);
+    if (error) throw error;
+  }
+  tool.name = name;
+  tool.url = url;
+  tool.category = category;
+  saveTools();
+}
+
+async function deleteTool(tool) {
+  if (currentUser && supabaseClient) {
+    const { error } = await supabaseClient.from("tools").delete().eq("id", tool.id);
+    if (error) throw error;
+  }
+  tools = tools.filter((t) => t.id !== tool.id);
+  saveTools();
 }
 
 function removeTool(tool) {
   if (!confirm(`确定删除「${tool.name}」吗？`)) return;
-  tools = tools.filter((t) => t.id !== tool.id);
-  saveTools();
-  renderGrid();
+  deleteTool(tool)
+    .then(renderGrid)
+    .catch((e) => alert("删除失败：" + extractErrMsg(e)));
 }
 
-// ===== 弹窗 =====
-const modalMask = document.getElementById("modalMask");
-const modalTitle = document.getElementById("modalTitle");
-const toolForm = document.getElementById("toolForm");
-const toolName = document.getElementById("toolName");
-const toolUrl = document.getElementById("toolUrl");
-const toolCategory = document.getElementById("toolCategory");
-const formError = document.getElementById("formError");
-
+// ===== 添加 / 编辑 弹窗 =====
 function fillCategorySelect(selected) {
   toolCategory.innerHTML = "";
   CATEGORIES.forEach((cat) => {
@@ -214,9 +377,6 @@ document.getElementById("cancelBtn").addEventListener("click", closeModal);
 modalMask.addEventListener("click", (e) => {
   if (e.target === modalMask) closeModal();
 });
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !modalMask.hidden) closeModal();
-});
 
 toolForm.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -229,33 +389,277 @@ toolForm.addEventListener("submit", (e) => {
     return;
   }
 
+  const saveBtn = document.getElementById("saveToolBtn");
+  saveBtn.disabled = true;
+
+  const finish = () => {
+    saveBtn.disabled = false;
+    closeModal();
+    renderGrid();
+  };
+
+  let action;
   if (editingId !== null) {
     const tool = tools.find((t) => t.id === editingId);
-    if (tool) {
-      tool.name = name;
-      tool.url = url;
-      tool.category = toolCategory.value;
-    }
+    if (!tool) { saveBtn.disabled = false; return; }
+    action = updateTool(tool, name, url, toolCategory.value);
   } else {
-    tools.push({
-      id: Date.now(),
-      name,
-      url,
-      category: toolCategory.value,
-    });
+    action = addTool(name, url, toolCategory.value);
   }
 
-  saveTools();
-  closeModal();
-  renderGrid();
+  action.then(finish).catch((err) => {
+    saveBtn.disabled = false;
+    formError.textContent = "保存失败：" + extractErrMsg(err);
+  });
 });
 
 // ===== 搜索 =====
-document.getElementById("searchInput").addEventListener("input", (e) => {
+searchInput.addEventListener("input", (e) => {
   keyword = e.target.value;
   renderGrid();
 });
 
+// =========================================================
+// 笔记：本地始终保存；登录后同时同步云端
+// =========================================================
+let noteSaveTimer = null;
+
+function setNoteStatus(text) {
+  noteStatus.textContent = text;
+}
+
+function saveNoteLocal() {
+  localStorage.setItem(NOTE_KEY, noteText.value);
+}
+
+function saveNote() {
+  saveNoteLocal();
+  if (!currentUser || !supabaseClient) {
+    setNoteStatus("已保存到本地 ✓");
+    return;
+  }
+  setNoteStatus("正在同步到云端…");
+  supabaseClient
+    .from("notes")
+    .upsert({ user_id: currentUser.id, content: noteText.value, updated_at: new Date().toISOString() })
+    .then(({ error }) => {
+      setNoteStatus(error ? "云同步失败：" + extractErrMsg(error) : "已保存并同步到云端 ✓");
+    });
+}
+
+noteText.addEventListener("input", () => {
+  setNoteStatus("编辑中…");
+  clearTimeout(noteSaveTimer);
+  noteSaveTimer = setTimeout(saveNote, 600);
+});
+
+notesToggle.addEventListener("click", () => {
+  const open = notesPanel.hidden;
+  notesPanel.hidden = !open;
+  notesToggle.classList.toggle("active", open);
+  if (open) noteText.focus();
+});
+
+// =========================================================
+// 账号：登录 / 注册 / 修改密码 / 退出
+// =========================================================
+function updateAuthUI() {
+  if (!cloudReady) {
+    userArea.hidden = true;
+    return;
+  }
+  userArea.hidden = false;
+  const loggedIn = !!currentUser;
+  loginBtn.hidden = loggedIn;
+  userChip.hidden = !loggedIn;
+  userEmail.textContent = loggedIn ? currentUser.email : "";
+  userEmail.title = loggedIn ? currentUser.email : "";
+}
+
+function openAuth(mode) {
+  authMode = mode;
+  authTitle.textContent = mode === "login" ? "登录" : "注册新账号";
+  authSubmit.textContent = mode === "login" ? "登录" : "注册";
+  tabLogin.classList.toggle("active", mode === "login");
+  tabRegister.classList.toggle("active", mode === "register");
+  authError.textContent = "";
+  authError.classList.remove("ok");
+  authMask.hidden = false;
+  authEmail.focus();
+}
+
+function closeAuth() {
+  authMask.hidden = true;
+}
+
+loginBtn.addEventListener("click", () => openAuth("login"));
+document.getElementById("authCancel").addEventListener("click", closeAuth);
+authMask.addEventListener("click", (e) => {
+  if (e.target === authMask) closeAuth();
+});
+
+tabLogin.addEventListener("click", () => openAuth("login"));
+tabRegister.addEventListener("click", () => openAuth("register"));
+
+authForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  authError.classList.remove("ok");
+  authError.textContent = "";
+  authSubmit.disabled = true;
+
+  try {
+    if (authMode === "login") {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      closeAuth(); // 登录成功，SIGNED_IN 事件会触发后续同步
+    } else {
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) throw error;
+      if (data.session) {
+        closeAuth(); // 邮箱确认已关闭：直接登录成功
+      } else {
+        authError.classList.add("ok");
+        authError.textContent = "注册成功！请先到邮箱点击确认链接，再回来登录。";
+      }
+    }
+  } catch (err) {
+    authError.textContent = extractErrMsg(err);
+  } finally {
+    authSubmit.disabled = false;
+  }
+});
+
+// 修改密码
+document.getElementById("changePwBtn").addEventListener("click", () => {
+  pwNew.value = "";
+  pwError.textContent = "";
+  pwMask.hidden = false;
+  pwNew.focus();
+});
+document.getElementById("pwCancel").addEventListener("click", () => {
+  pwMask.hidden = true;
+});
+pwMask.addEventListener("click", (e) => {
+  if (e.target === pwMask) pwMask.hidden = true;
+});
+
+pwForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  pwError.textContent = "";
+  try {
+    const { error } = await supabaseClient.auth.updateUser({ password: pwNew.value });
+    if (error) throw error;
+    pwMask.hidden = true;
+    alert("密码修改成功");
+  } catch (err) {
+    pwError.textContent = extractErrMsg(err);
+  }
+});
+
+// 退出登录
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  await supabaseClient.auth.signOut(); // SIGNED_OUT 事件负责还原本地数据
+});
+
+// ===== 登录后的云端同步 =====
+function handleSignedIn(user) {
+  if (syncing || (currentUser && currentUser.id === user.id)) return;
+  syncing = true;
+  currentUser = user;
+  updateAuthUI();
+
+  // 快照登录前的本地数据，退出登录时还原
+  localBackup = { tools: tools.slice(), note: localStorage.getItem(NOTE_KEY) || "" };
+
+  syncOnLogin()
+    .catch((e) => alert("云端同步失败：" + extractErrMsg(e)))
+    .finally(() => {
+      syncing = false;
+    });
+}
+
+function handleSignedOut() {
+  currentUser = null;
+  syncing = false;
+  if (localBackup) {
+    tools = localBackup.tools;
+    noteText.value = localBackup.note;
+    saveTools();
+    saveNoteLocal();
+    localBackup = null;
+  }
+  setNoteStatus("");
+  updateAuthUI();
+  renderCategories();
+  renderGrid();
+}
+
+async function syncOnLogin() {
+  // 1. 拉取云端工具列表
+  const { data: cloud, error } = await supabaseClient
+    .from("tools")
+    .select("*")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+
+  const cloudKeys = new Set(cloud.map((t) => normUrlKey(t.url)));
+
+  if (cloud.length === 0 && tools.length > 0) {
+    // 2. 云端为空：把当前本地列表（含自定义）整体上传
+    const rows = tools.map((t, i) => ({ name: t.name, url: t.url, category: t.category, sort: i }));
+    const { data: inserted, error: err } = await supabaseClient.from("tools").insert(rows).select();
+    if (err) throw err;
+    tools = inserted;
+  } else if (cloud.length > 0) {
+    // 3. 合并：本地有、云端没有的上传；结果以云端为准
+    const extra = tools.filter((t) => !cloudKeys.has(normUrlKey(t.url)));
+    if (extra.length > 0) {
+      const rows = extra.map((t, i) => ({ name: t.name, url: t.url, category: t.category, sort: cloud.length + i }));
+      const { data: inserted, error: err } = await supabaseClient.from("tools").insert(rows).select();
+      if (!err && inserted) cloud.push(...inserted);
+    }
+    tools = cloud;
+  }
+
+  saveTools();
+
+  // 4. 笔记：云端有就用云端的，否则把本地笔记上传
+  const { data: noteRow } = await supabaseClient
+    .from("notes")
+    .select("content")
+    .eq("user_id", currentUser.id)
+    .maybeSingle();
+
+  if (noteRow && noteRow.content) {
+    noteText.value = noteRow.content;
+    saveNoteLocal();
+  } else if (noteText.value.trim()) {
+    await supabaseClient
+      .from("notes")
+      .upsert({ user_id: currentUser.id, content: noteText.value, updated_at: new Date().toISOString() });
+  }
+
+  renderCategories();
+  renderGrid();
+}
+
+// ===== 启动云端（异步，不阻塞本地功能） =====
+initCloud();
+
+// ===== 全局快捷键 =====
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    if (!modalMask.hidden) closeModal();
+    if (!authMask.hidden) closeAuth();
+    if (!pwMask.hidden) pwMask.hidden = true;
+  }
+});
+
 // ===== 初始化 =====
+noteText.value = localStorage.getItem(NOTE_KEY) || "";
+setNoteStatus(currentUser ? "已同步到云端 ✓" : "已保存到本地 ✓");
+updateAuthUI();
 renderCategories();
 renderGrid();
