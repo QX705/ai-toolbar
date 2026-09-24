@@ -120,6 +120,7 @@ let currentUser = null;    // Supabase 登录用户
 let localBackup = null;    // 登录前的本地数据快照，退出登录时还原
 let authMode = "login";    // 登录弹窗当前模式
 let syncing = false;
+let syncFailCount = 0;     // 连续同步失败次数（用于自愈重试与强制重登）
 
 // ===== 工具函数 =====
 // 根据名称生成稳定的头像底色
@@ -303,18 +304,27 @@ function renderGrid() {
       <span class="tool-cat">${escapeHtml(tool.category)}</span>
     `;
 
-    // 网站图标：逐个候选源尝试，全部失败则保留字母头像
+    // 网站图标：逐个候选源尝试（8 秒超时强制换源），全部失败则保留字母头像
     const iconImg = card.querySelector(".tool-icon");
     const sources = iconSources(tool.url);
     let sourceIdx = 0;
-    iconImg.addEventListener("load", () => iconImg.classList.add("loaded"));
-    iconImg.addEventListener("error", () => {
+    let iconTimer = null;
+    const tryNextSource = () => {
+      clearTimeout(iconTimer);
       sourceIdx++;
-      if (sourceIdx < sources.length) iconImg.src = sources[sourceIdx];
-      else iconImg.remove();
-    });
-    if (sources.length > 0) iconImg.src = sources[0];
-    else iconImg.remove();
+      if (sourceIdx < sources.length) {
+        iconImg.src = sources[sourceIdx];
+        iconTimer = setTimeout(tryNextSource, 8000);
+      } else {
+        iconImg.remove();
+      }
+    };
+    iconImg.addEventListener("load", () => { clearTimeout(iconTimer); iconImg.classList.add("loaded"); });
+    iconImg.addEventListener("error", tryNextSource);
+    if (sources.length > 0) {
+      iconImg.src = sources[0];
+      iconTimer = setTimeout(tryNextSource, 8000);
+    } else iconImg.remove();
 
     // 编辑 / 删除（阻止冒泡，避免触发打开链接）
     card.querySelector(".edit").addEventListener("click", (e) => {
@@ -606,15 +616,39 @@ function handleSignedIn(user) {
   localBackup = { tools: tools.slice(), note: localStorage.getItem(NOTE_KEY) || "" };
 
   syncOnLogin()
-    .catch((e) => alert("云端同步失败：" + extractErrMsg(e) + "\n\n请刷新页面重试一次；若持续失败，可能是 Supabase 平台临时故障（status.supabase.com 可查），稍后再试即可。"))
-    .finally(() => {
+    .then(() => { syncFailCount = 0; })
+    .catch((e) => {
+      // 静默自愈：Supabase 平台有"刷新令牌被拒"的间歇性故障，自动重试直到恢复
       syncing = false;
+      syncFailCount++;
+      setTimeout(retrySyncLoop, 10000 * syncFailCount);
     });
+}
+
+// 同步失败后的自愈循环：每轮间隔递增；连续 5 次失败则清理坏会话并要求重新登录
+async function retrySyncLoop() {
+  if (!currentUser || !supabaseClient || syncing) return;
+  syncing = true;
+  try {
+    await syncOnLogin();
+    syncFailCount = 0;
+    syncing = false;
+  } catch (e) {
+    syncing = false;
+    syncFailCount++;
+    if (syncFailCount >= 5) {
+      await supabaseClient.auth.signOut(); // 触发 SIGNED_OUT，清掉坏会话
+      alert("云端同步连续失败，已自动退出登录（可能是 Supabase 平台故障，status.supabase.com 可查进度）。\n\n请稍后重新登录，即可拿到新的长效令牌恢复正常。");
+      return;
+    }
+    setTimeout(retrySyncLoop, 15000 * syncFailCount);
+  }
 }
 
 function handleSignedOut() {
   currentUser = null;
   syncing = false;
+  syncFailCount = 0;
   if (localBackup) {
     tools = localBackup.tools;
     noteText.value = localBackup.note;
