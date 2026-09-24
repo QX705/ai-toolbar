@@ -536,6 +536,53 @@ main {
   border-color: var(--primary);
 }
 
+/* ===== 地图面板 ===== */
+.map-panel {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 18px 0;
+}
+
+.map-panel[hidden] {
+  display: none;
+}
+
+.map-search-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.map-search-row input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.map-search-row input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.map-container {
+  width: 100%;
+  height: 420px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+#mapToggle.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
 /* ===== 响应式 ===== */
 @media (max-width: 640px) {
   .topbar-inner {

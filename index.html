@@ -17,6 +17,7 @@
         <input id="searchInput" type="text" placeholder="搜索工具名称或网址..." autocomplete="off" />
       </div>
       <button id="notesToggle" class="btn btn-ghost">📝 笔记</button>
+      <button id="mapToggle" class="btn btn-ghost" hidden>🗺️ 地图</button>
       <button id="addBtn" class="btn btn-primary">＋ 添加工具</button>
       <div class="user-area" id="userArea" hidden>
         <!-- 未登录 -->
@@ -39,6 +40,21 @@
         <span id="noteStatus" class="note-status"></span>
       </div>
       <textarea id="noteText" placeholder="随手记点什么…输入后自动保存"></textarea>
+    </div>
+  </section>
+
+  <!-- 地图面板 -->
+  <section class="map-panel" id="mapPanel" hidden>
+    <div class="container">
+      <div class="notes-head">
+        <strong>🗺️ 地图</strong>
+        <span id="mapStatus" class="note-status"></span>
+      </div>
+      <div class="map-search-row">
+        <input id="mapSearch" placeholder="搜索地点，如：西湖、北京站、嘉立创..." autocomplete="off" />
+        <button id="mapLocate" class="btn btn-ghost" type="button">📍 我的定位</button>
+      </div>
+      <div id="mapContainer" class="map-container"></div>
     </div>
   </section>
 
@@ -133,7 +149,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=12"></script>
-  <script src="js/main.js?v=12"></script>
+  <script src="js/config.js?v=13"></script>
+  <script src="js/main.js?v=13"></script>
 </body>
 </html>

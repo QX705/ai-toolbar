@@ -13,3 +13,13 @@
 
 const SUPABASE_URL = "https://saoxclysufugrqutaqny.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_m1BddNDAzcy9gBVIGA8C-Q_f_aTAw2X";
+
+// ===== 高德地图（可选功能）=====
+// 获取方法：
+//   1. 打开 https://lbs.amap.com 注册（手机号即可）并进入控制台
+//   2. 应用管理 → 创建新应用 → 添加 Key
+//   3. 服务平台一定要选「Web端(JS API)」
+//   4. 创建后得到 Key 和配对的「安全密钥 jscode」，分别填到下面
+// 都填好后，顶栏会出现「地图」按钮；留空则不显示该功能。
+const AMAP_KEY = "";
+const AMAP_SECURITY_CODE = "";

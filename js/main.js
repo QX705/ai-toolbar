@@ -38,7 +38,7 @@ const DEFAULT_TOOLS = [
     
     // 游戏官网（Mod）
     { id: 17, name: "人类一败涂地",         url: "https://gaming.lenovo.com/human-fall-flat",         category: "游戏官网" },
-    { id: 18, name: "科雷",                 url: "https://accounts.klei.com",                         category: "游戏官网" },
+    { id: 18, name: "科雷娱乐",                 url: "https://accounts.klei.com",                         category: "游戏官网" },
     { id: 19, name: "BongoCat_Mod",         url: "https://xv40.lanzouu.com/b0fpy9v9e",                category: "游戏官网" },
     { id: 20, name: "Steam",                url: "https://store.steampowered.com",                   category: "游戏官网" },
     // 其他
@@ -802,6 +802,122 @@ document.getElementById("resetBtn").addEventListener("click", async () => {
   renderGrid();
 });
 
+// =========================================================
+// 地图：高德 JS API（config.js 填了 Key 才显示入口）
+// SDK 在第一次打开面板时才加载，不拖慢页面
+// =========================================================
+const mapToggle = document.getElementById("mapToggle");
+const mapPanel = document.getElementById("mapPanel");
+const mapSearch = document.getElementById("mapSearch");
+const mapStatus = document.getElementById("mapStatus");
+
+let amapMap = null;
+let mapLoading = false;
+let mapReady = false;
+
+const amapConfigured =
+  typeof AMAP_KEY === "string" && AMAP_KEY.trim().length > 10 &&
+  typeof AMAP_SECURITY_CODE === "string" && AMAP_SECURITY_CODE.trim().length > 10;
+
+function setMapStatus(text) {
+  mapStatus.textContent = text;
+}
+
+function loadAmapScript() {
+  return new Promise((resolve, reject) => {
+    if (window.AMap) return resolve();
+    // 安全密钥必须在 SDK 加载前配置
+    window._AMapSecurityConfig = { securityJsCode: AMAP_SECURITY_CODE.trim() };
+    const s = document.createElement("script");
+    s.src = "https://webapi.amap.com/maps?v=2.0&key=" + encodeURIComponent(AMAP_KEY.trim()) +
+      "&plugin=AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation,AMap.Scale";
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("脚本加载失败"));
+    document.head.appendChild(s);
+  });
+}
+
+async function openMapPanel() {
+  mapPanel.hidden = false;
+  if (mapReady || mapLoading) return;
+  mapLoading = true;
+
+  setMapStatus("正在加载地图…");
+  try {
+    await loadAmapScript();
+
+    amapMap = new AMap.Map("mapContainer", {
+      zoom: 11,
+      center: [116.397, 39.909], // 默认北京，可用搜索/定位移动
+      viewMode: "2D",
+    });
+
+    amapMap.addControl(new AMap.Scale());
+    amapMap.addControl(new AMap.ToolBar({ position: "RB" }));
+
+    // 搜索框：输入联想 + 选中后飞到该地点并打标记
+    const autoComplete = new AMap.AutoComplete({ input: "mapSearch" });
+    autoComplete.on("select", (e) => {
+      const poi = e.poi;
+      if (!poi || !poi.location) {
+        setMapStatus("没找到该地点，换个关键词试试");
+        return;
+      }
+      const pos = [poi.location.lng, poi.location.lat];
+      amapMap.setZoomAndCenter(15, pos);
+      new AMap.Marker({ position: pos, title: poi.name, map: amapMap });
+      setMapStatus(poi.name ? "已定位：" + poi.name : "已定位");
+    });
+
+    amapMap.on("complete", () => {
+      mapReady = true;
+      mapLoading = false;
+      setMapStatus("");
+    });
+    amapMap.on("error", () => {
+      mapLoading = false;
+      setMapStatus("地图加载失败：请检查 Key 和安全密钥是否配对");
+    });
+
+    // 兜底：15 秒仍未就绪视为失败
+    setTimeout(() => {
+      if (!mapReady) {
+        mapLoading = false;
+        setMapStatus("地图加载超时：请检查 Key / 安全密钥 / 网络");
+      }
+    }, 15000);
+  } catch (e) {
+    mapLoading = false;
+    const msg = (e.message || "").includes("AMap")
+      ? "地图脚本加载异常：请检查 Key 是否正确、网络是否可达 webapi.amap.com"
+      : "地图加载失败：" + (e.message || "请检查 Key 配置");
+    setMapStatus(msg);
+  }
+}
+
+mapToggle.addEventListener("click", () => {
+  const open = mapPanel.hidden;
+  mapPanel.hidden = !open;
+  mapToggle.classList.toggle("active", open);
+  if (open) openMapPanel();
+});
+
+document.getElementById("mapLocate").addEventListener("click", () => {
+  if (!mapReady) return;
+  setMapStatus("正在获取定位…");
+  const geo = new AMap.Geolocation({ enableHighAccuracy: true, timeout: 10000 });
+  geo.getCurrentPosition((status, result) => {
+    if (status === "complete") {
+      const pos = [result.position.lng, result.position.lat];
+      amapMap.setZoomAndCenter(15, pos);
+      new AMap.Marker({ position: pos, title: "我的位置", map: amapMap });
+      setMapStatus("已定位到你的位置");
+    } else {
+      setMapStatus("定位失败：请检查浏览器定位权限");
+    }
+  });
+});
+
 // ===== 全局快捷键 =====
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
@@ -814,6 +930,7 @@ window.addEventListener("keydown", (e) => {
 // ===== 初始化 =====
 noteText.value = localStorage.getItem(NOTE_KEY) || "";
 setNoteStatus(currentUser ? "已同步到云端 ✓" : "已保存到本地 ✓");
+mapToggle.hidden = !amapConfigured; // 填了高德 Key 才显示地图入口
 updateAuthUI();
 renderCategories();
 renderGrid();
