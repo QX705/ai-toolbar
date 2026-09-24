@@ -575,7 +575,7 @@ function handleSignedIn(user) {
   localBackup = { tools: tools.slice(), note: localStorage.getItem(NOTE_KEY) || "" };
 
   syncOnLogin()
-    .catch((e) => alert("云端同步失败：" + extractErrMsg(e)))
+    .catch((e) => alert("云端同步失败：" + extractErrMsg(e) + "\n\n请刷新页面重试一次；若持续失败，可能是 Supabase 平台临时故障（status.supabase.com 可查），稍后再试即可。"))
     .finally(() => {
       syncing = false;
     });
@@ -598,6 +598,25 @@ function handleSignedOut() {
 }
 
 async function syncOnLogin() {
+  // 确保登录凭据已附着到客户端，避免竞态导致插入被 RLS 误判为匿名写入
+  await supabaseClient.auth.getSession();
+
+  // 带重试的上传：Supabase 平台存在"刷新后 JWT 被拒"的已知故障，
+  // 失败时先刷新会话令牌再等 2 秒重试，共 3 次
+  async function uploadRows(rows) {
+    let lastErr = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data, error } = await supabaseClient.from("tools").insert(rows).select();
+      if (!error) return data;
+      lastErr = error;
+      try {
+        await supabaseClient.auth.refreshSession();
+      } catch (e) { /* 刷新失败不影响下一轮重试 */ }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+    throw lastErr;
+  }
+
   // 1. 拉取云端工具列表
   const { data: cloud, error } = await supabaseClient
     .from("tools")
@@ -610,16 +629,14 @@ async function syncOnLogin() {
   if (cloud.length === 0 && tools.length > 0) {
     // 2. 云端为空：把当前本地列表（含自定义）整体上传
     const rows = tools.map((t, i) => ({ name: t.name, url: t.url, category: t.category, sort: i }));
-    const { data: inserted, error: err } = await supabaseClient.from("tools").insert(rows).select();
-    if (err) throw err;
-    tools = inserted;
+    tools = await uploadRows(rows);
   } else if (cloud.length > 0) {
     // 3. 合并：本地有、云端没有的上传；结果以云端为准
     const extra = tools.filter((t) => !cloudKeys.has(normUrlKey(t.url)));
     if (extra.length > 0) {
       const rows = extra.map((t, i) => ({ name: t.name, url: t.url, category: t.category, sort: cloud.length + i }));
-      const { data: inserted, error: err } = await supabaseClient.from("tools").insert(rows).select();
-      if (!err && inserted) cloud.push(...inserted);
+      const inserted = await uploadRows(rows);
+      cloud.push(...inserted);
     }
     tools = cloud;
   }
