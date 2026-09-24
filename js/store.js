@@ -27,7 +27,7 @@ export const DEFAULT_TOOLS = [
     { id: 15, name: "iLovePDF",             url: "https://www.ilovepdf.com",                        category: "学习插件" },
     { id: 16, name: "TinyPNG",              url: "https://tinypng.com",                             category: "学习插件" },
     { id: 17, name: "人类一败涂地",         url: "https://gaming.lenovo.com/human-fall-flat",        category: "游戏官网" },
-    { id: 18, name: "科雷",                 url: "https://accounts.klei.com",                        category: "游戏官网" },
+    { id: 18, name: "科雷娱乐",                 url: "https://accounts.klei.com",                        category: "游戏官网" },
     { id: 19, name: "BongoCat_Mod",         url: "https://xv40.lanzouu.com/b0fpy9v9e",               category: "游戏官网" },
     { id: 20, name: "Steam",                url: "https://store.steampowered.com",                   category: "游戏官网" },
     { id: 21, name: "金数据",               url: "https://jinshuju.net",                             category: "其他" },
