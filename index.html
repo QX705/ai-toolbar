@@ -40,28 +40,36 @@
     </div>
   </section>
 
-  <!-- 地图面板 -->
-  <section class="map-panel" id="mapPanel" hidden>
-    <div class="container">
-      <div class="notes-head">
-        <strong>🗺️ 地图 · 旅行攻略</strong>
-        <span id="mapStatus" class="note-status"></span>
-      </div>
-      <div class="map-search-row">
-        <input id="mapSearch" placeholder="搜索地点/景区，选中后可写攻略..." autocomplete="off" />
-        <button id="mapLocate" class="btn btn-ghost" type="button">📍 我的定位</button>
-      </div>
-      <div class="map-layout">
-        <div id="mapContainer" class="map-container"></div>
-        <aside class="place-sidebar">
-          <div id="placeEditor" hidden>
+  <main class="container">
+    <!-- 控制条：分类下拉 + 笔记 + 添加工具 -->
+    <div class="control-bar">
+      <select id="categorySelect" aria-label="选择分类"></select>
+      <button id="notesToggle" class="btn btn-ghost" type="button">📝 笔记</button>
+      <button id="addBtn" class="btn btn-primary" type="button">＋ 添加工具</button>
+    </div>
+
+    <!-- 地图（滚动到可见时自动加载） -->
+    <section class="tool-section" id="mapSection">
+      <h2 class="section-title">地图 <span id="mapStatus" class="note-status"></span></h2>
+      <div class="map-card">
+        <div class="map-toolbar">
+          <input id="mapSearch" placeholder="搜索地点/景区，选中后可写攻略..." autocomplete="off" />
+          <button id="mapLocate" class="btn btn-ghost" type="button">📍 定位</button>
+        </div>
+        <div class="map-wrap">
+          <div id="mapContainer" class="map-inner"></div>
+          <aside id="placeEditor" class="place-editor" hidden>
+            <div class="place-editor-head">
+              <strong>📍 地点攻略</strong>
+              <button type="button" id="placeCloseBtn" title="关闭">✕</button>
+            </div>
             <label class="field">
               <span>地点名称</span>
               <input id="placeName" maxlength="30" placeholder="如：西湖景区" />
             </label>
             <label class="field">
               <span>攻略</span>
-              <textarea id="placeGuide" rows="6" placeholder="写点什么：交通、门票、最佳时间、玩法建议..."></textarea>
+              <textarea id="placeGuide" rows="5" placeholder="交通、门票、最佳时间、玩法建议..."></textarea>
             </label>
             <div class="field">
               <span>当地图片</span>
@@ -74,22 +82,11 @@
               <button type="button" class="btn btn-ghost" id="placeDeleteBtn" hidden>删除</button>
               <button type="button" class="btn btn-primary" id="placeSaveBtn">保存</button>
             </div>
-          </div>
-          <div id="placeList" class="place-list"></div>
-          <p class="place-hint" id="placeHint">点击地图任意位置，或搜索选中一个地点/景区，即可为它写攻略、传照片</p>
-        </aside>
+          </aside>
+        </div>
+        <div id="placeChips" class="place-chips"></div>
       </div>
-    </div>
-  </section>
-
-  <main class="container">
-    <!-- 控制条：分类下拉 + 笔记 / 地图 + 添加工具 -->
-    <div class="control-bar">
-      <select id="categorySelect" aria-label="选择分类"></select>
-      <button id="notesToggle" class="btn btn-ghost" type="button">📝 笔记</button>
-      <button id="mapToggle" class="btn btn-ghost" type="button" hidden>🗺️ 地图</button>
-      <button id="addBtn" class="btn btn-primary" type="button">＋ 添加工具</button>
-    </div>
+    </section>
 
     <!-- 工具卡片（按分类分组） -->
     <div id="toolSections"></div>
@@ -178,7 +175,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=21"></script>
-  <script src="js/main.js?v=21"></script>
+  <script src="js/config.js?v=24"></script>
+  <script src="js/main.js?v=24" type="module"></script>
 </body>
 </html>

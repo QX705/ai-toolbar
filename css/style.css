@@ -553,121 +553,9 @@ main {
   border-color: var(--primary);
 }
 
-/* ===== 地图面板 ===== */
-.map-panel {
-  background: #fff;
-  border-bottom: 1px solid var(--border);
-  padding: 18px 0;
-}
-
-.map-panel[hidden] {
-  display: none;
-}
-
-.map-search-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.map-search-row input {
-  flex: 1;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.map-search-row input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-}
-
-.map-container {
-  width: 100%;
-  height: 420px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-#mapToggle.active {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--primary);
-  border-color: var(--primary);
-}
-
-.map-layout {
-  display: flex;
-  gap: 14px;
-}
-
-.map-layout .map-container {
-  flex: 1;
-  min-width: 0;
-  height: 460px;
-}
-
-.place-sidebar {
-  width: 300px;
-  flex-shrink: 0;
-  max-height: 460px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: #fffdf5;
-  border: 1px solid #f1e9c9;
-  border-radius: 14px;
-  padding: 14px;
-}
-
-.place-sidebar .field input,
-.place-sidebar .field textarea {
-  background: #fffef9;
-}
-
+/* ===== 地图卡片 ===== */
 #placeEditor[hidden] {
   display: none;
-}
-
-.place-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.place-item {
-  background: #f9fafb;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 12px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  transition: border-color 0.2s;
-}
-
-.place-item:hover {
-  border-color: var(--primary);
-}
-
-.place-item strong {
-  font-size: 0.9rem;
-}
-
-.place-item span {
-  font-size: 0.78rem;
-  color: var(--text-light);
-}
-
-.place-hint {
-  font-size: 0.8rem;
-  color: var(--text-light);
-  line-height: 1.6;
 }
 
 .photo-grid {
@@ -724,18 +612,128 @@ main {
 }
 
 @media (max-width: 900px) {
-  .map-layout {
-    flex-direction: column;
-  }
-
-  .map-layout .map-container {
+  .map-inner {
     height: 320px;
   }
 
-  .place-sidebar {
-    width: 100%;
-    max-height: none;
+  .place-editor {
+    width: 240px;
   }
+}
+
+/* ===== 地图卡片 ===== */
+.map-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 2px 10px rgba(17, 24, 39, 0.07);
+}
+
+.map-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.map-toolbar input {
+  flex: 1;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.map-toolbar input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.map-wrap {
+  position: relative;
+}
+
+.map-inner {
+  width: 100%;
+  height: 400px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* 攻略编辑：悬浮在地图右上角的小窗 */
+.place-editor {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 280px;
+  max-height: calc(100% - 20px);
+  overflow-y: auto;
+  background: #fffdf5;
+  border: 1px solid #f1e9c9;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  padding: 12px;
+  z-index: 10;
+}
+
+.place-editor[hidden] {
+  display: none;
+}
+
+.place-editor-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.place-editor-head button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.place-editor .form-error {
+  margin-bottom: 6px;
+}
+
+.place-editor .modal-actions {
+  margin-bottom: 0;
+}
+
+.place-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.place-chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.place-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.section-title .note-status {
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-left: 8px;
 }
 
 /* ===== 响应式 ===== */
