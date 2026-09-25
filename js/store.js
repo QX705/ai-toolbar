@@ -34,6 +34,7 @@ export const DEFAULT_TOOLS = [
     { id: 22, name: "Supabase",             url: "https://supabase.com",                             category: "其他" },
     { id: 23, name: "全民简历",             url: "https://www.qmjianli.com",                         category: "其他" },
     { id: 24, name: "Maker World",          url: "https://makerworld.com.cn",                        category: "其他" },
+    { id: 25, name: "湖工教务平台",         url: "http://kyjxxt.hut.edu.cn/jsxsd/",                  category: "学习插件" },
 ];
 
 // 全局共享状态

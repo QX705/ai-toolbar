@@ -38,6 +38,10 @@ window.addEventListener("keydown", (e) => {
     }
 });
 
+// 教务平台内嵌面板：仅 HTTP（本地）访问显示，HTTPS 正式站自动隐藏
+const jwxtSection = document.getElementById("jwxtSection");
+if (jwxtSection && location.protocol === "https:") jwxtSection.hidden = true;
+
 // ===== 初始化 =====
 App.tools = loadTools();
 setNoteStatus("已保存到本地 ✓");

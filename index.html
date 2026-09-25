@@ -55,6 +55,15 @@
     </div>
   </section>
 
+  <!-- 教务平台内嵌（仅 HTTP 本地访问可用；HTTPS 正式站会被浏览器拦截，自动隐藏） -->
+  <section id="jwxtSection">
+    <div class="jwxt-inner">
+      <h2 class="section-title">🏫 教务平台 <span class="note-status">登录后可查课表/成绩（需校园网或 VPN 环境）</span></h2>
+      <iframe id="jwxtFrame" class="jwxt-frame" src="http://kyjxxt.hut.edu.cn/jsxsd/" title="教务平台"></iframe>
+      <p class="jwxt-note">提示：在框内直接登录你的学号密码即可使用；此面板仅在本地（HTTP）访问时显示，正式网站自动隐藏。</p>
+    </div>
+  </section>
+
   <main class="container">
     <!-- 控制条：分类下拉 + 地图/笔记 + 添加工具 -->
     <div class="control-bar">
@@ -230,7 +239,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=43"></script>
-  <script src="js/main.js?v=43" type="module"></script>
+  <script src="js/config.js?v=45"></script>
+  <script src="js/main.js?v=45" type="module"></script>
 </body>
 </html>

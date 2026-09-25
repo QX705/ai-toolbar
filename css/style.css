@@ -926,3 +926,27 @@ body {
 #mapSection .map-inner {
   height: clamp(440px, 52vh, 640px);
 }
+
+/* ===== 教务平台内嵌面板 ===== */
+#jwxtSection {
+  padding: 8px 24px 12px;
+}
+
+.jwxt-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.jwxt-frame {
+  width: 100%;
+  height: 720px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.jwxt-note {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 8px;
+}
