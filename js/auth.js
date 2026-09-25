@@ -51,6 +51,10 @@ function openAuth(mode) {
     authEmail.focus();
 }
 
+export function openLoginModal() {
+    openAuth("login");
+}
+
 export function closeAuth() {
     authMask.hidden = true;
 }

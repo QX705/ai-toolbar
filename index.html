@@ -88,13 +88,13 @@
               </label>
               <label class="field">
                 <span>第一条攻略</span>
-                <textarea id="guideText" rows="4" placeholder="交通、门票、最佳时间、玩法建议..."></textarea>
+                <textarea id="placeFirstGuide" rows="4" placeholder="交通、门票、最佳时间、玩法建议..."></textarea>
               </label>
               <div class="field">
                 <span>当地图片</span>
-                <label for="guidePhotoInput" class="photo-add">＋ 添加图片</label>
-                <input id="guidePhotoInput" type="file" accept="image/*" multiple hidden />
-                <div id="guidePendingGrid" class="photo-grid"></div>
+                <label for="placeFirstPhotoInput" class="photo-add">＋ 添加图片</label>
+                <input id="placeFirstPhotoInput" type="file" accept="image/*" multiple hidden />
+                <div id="placeFirstGrid" class="photo-grid"></div>
               </div>
               <button type="button" class="btn btn-primary" id="placeCreateBtn">创建地点并保存攻略</button>
             </div>
@@ -227,7 +227,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=35"></script>
-  <script src="js/main.js?v=35" type="module"></script>
+  <script src="js/config.js?v=37"></script>
+  <script src="js/main.js?v=37" type="module"></script>
 </body>
 </html>

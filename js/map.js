@@ -4,6 +4,7 @@
 // =========================================================
 
 import { App, escapeHtml, extractErrMsg } from "./store.js";
+import { openLoginModal } from "./auth.js";
 
 const mapSection = document.getElementById("mapSection");
 const mapSearch = document.getElementById("mapSearch");
@@ -30,6 +31,9 @@ const guidePendingGrid = document.getElementById("guidePendingGrid");
 const guideSaveBtn = document.getElementById("guideSaveBtn");
 const myGuides = document.getElementById("myGuides");
 const myGuidesEmpty = document.getElementById("myGuidesEmpty");
+const placeFirstGuide = document.getElementById("placeFirstGuide");
+const placeFirstPhotoInput = document.getElementById("placeFirstPhotoInput");
+const placeFirstGrid = document.getElementById("placeFirstGrid");
 const placeError = document.getElementById("placeError");
 const placeChips = document.getElementById("placeChips");
 
@@ -42,6 +46,7 @@ let places = [];            // 全部地点（含别人的）
 let activePlace = null;     // 当前选中的地点 {id, name, lng, lat}
 let guides = [];            // 当前地点的所有攻略（读视图数据）
 let pendingFiles = [];      // 写视图：待上传图片
+let placeFirstFiles = [];   // 创建地点时的待上传图片
 let placeMarkers = [];
 
 export const amapConfigured =
@@ -122,6 +127,27 @@ async function initMap() {
                 selectLocation(poi.location.lng, poi.location.lat, poi.name || "");
             });
         } catch (e) { console.warn("搜索联想不可用", e); }
+
+        // 回车 = 直接搜索关键词并定位（不依赖联想下拉）
+        mapSearch.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter") return;
+            const kw = mapSearch.value.trim();
+            if (!kw) return;
+            setMapStatus("正在搜索「" + kw + "」…");
+            const search = new AMap.PlaceSearch({ city: "全国", pageSize: 5 });
+            search.search(kw, (status, result) => {
+                if (status === "complete" && result.poiList && result.poiList.pois.length > 0) {
+                    const poi = result.poiList.pois[0];
+                    const pos = [poi.location.lng, poi.location.lat];
+                    amapMap.setZoomAndCenter(15, pos);
+                    new AMap.Marker({ position: pos, title: poi.name, map: amapMap });
+                    selectLocation(poi.location.lng, poi.location.lat, poi.name || kw);
+                    setMapStatus("");
+                } else {
+                    setMapStatus("没找到「" + kw + "」，换个关键词试试");
+                }
+            });
+        });
 
         // 兜底：25 秒仍未完成 → 销毁重建一次（瓦片加载停滞的自愈）
         setTimeout(() => {
@@ -271,7 +297,8 @@ export function clearPlacesUI() {
 // 选中一个位置：已有地点直接打开；新位置进入创建草稿
 function selectLocation(lng, lat, presetName) {
     if (!App.currentUser) {
-        setMapStatus("登录后才能查看和记录地点攻略哦");
+        setMapStatus("请先登录，登录后即可在地图上记录攻略");
+        openLoginModal();
         return;
     }
     const existing = places.find((p) => p.name === presetName && presetName !== "");
@@ -300,6 +327,43 @@ function selectLocation(lng, lat, presetName) {
     placeName.focus();
 }
 
+// 创建地点时的图片选择（原图直传）
+placeFirstPhotoInput.addEventListener("change", () => {
+    const picked = [...placeFirstPhotoInput.files];
+    placeFirstPhotoInput.value = "";
+    if (picked.length === 0) return;
+    const accepted = [];
+    const rejected = [];
+    for (const f of picked) {
+        if (!f.type.startsWith("image/")) { rejected.push(f.name + "（不是图片）"); continue; }
+        if (f.size > 50 * 1024 * 1024) { rejected.push(f.name + "（超过 50MB）"); continue; }
+        accepted.push(f);
+    }
+    placeFirstFiles = placeFirstFiles.concat(accepted);
+    renderFirstGrid();
+    if (rejected.length > 0) {
+        placeError.textContent = "已跳过：" + rejected.join("、");
+        placeError.classList.remove("ok");
+    } else {
+        placeError.textContent = "已选择 " + accepted.length + " 张原图";
+        placeError.classList.add("ok");
+    }
+});
+
+function renderFirstGrid() {
+    placeFirstGrid.innerHTML = "";
+    placeFirstFiles.forEach((f, i) => {
+        const wrap = document.createElement("div");
+        wrap.className = "photo-item";
+        wrap.innerHTML = `<img src="${URL.createObjectURL(f)}" alt=""><button class="photo-del" title="移除">✕</button>`;
+        wrap.querySelector(".photo-del").addEventListener("click", () => {
+            placeFirstFiles.splice(i, 1);
+            renderFirstGrid();
+        });
+        placeFirstGrid.appendChild(wrap);
+    });
+}
+
 placeCreateBtn.addEventListener("click", async () => {
     if (!activePlace) return;
     if (!App.currentUser) {
@@ -311,8 +375,8 @@ placeCreateBtn.addEventListener("click", async () => {
         placeError.textContent = "请填写地点名称";
         return;
     }
-    const content = guideText.value.trim();
-    if (!content && pendingFiles.length === 0) {
+    const content = placeFirstGuide.value.trim();
+    if (!content && placeFirstFiles.length === 0) {
         placeError.textContent = "写点攻略或添加图片（也可以留空只建地点）";
         return;
     }
@@ -330,9 +394,9 @@ placeCreateBtn.addEventListener("click", async () => {
         places.push(activePlace);
 
         // 2. 有攻略内容或图片 → 保存第一条攻略
-        if (content || pendingFiles.length > 0) {
+        if (content || placeFirstFiles.length > 0) {
             const photos = [];
-            for (const f of pendingFiles) {
+            for (const f of placeFirstFiles) {
                 const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
                 const path = `${App.currentUser.id}/${activePlace.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
                 const { error: upErr } = await App.supabaseClient.storage.from("place-photos").upload(path, f);
@@ -347,8 +411,9 @@ placeCreateBtn.addEventListener("click", async () => {
                 .single();
             if (gErr) throw gErr;
             guides.unshift(guide);
-            pendingFiles = [];
-            guideText.value = "";
+            placeFirstFiles = [];
+            placeFirstGuide.value = "";
+            renderFirstGrid();
         }
 
         renderMarkers();
