@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI 工具栏</title>
-  <link rel="stylesheet" href="css/style.css?v=38" />
+  <link rel="stylesheet" href="css/style.css?v=42" />
   <script>
     // 临时调试：捕获脚本加载/模块错误 + console.error
     window.addEventListener("error", function (e) {
@@ -72,6 +72,10 @@
           <input id="mapSearch" placeholder="搜索地点/景区，选中后可写攻略..." autocomplete="off" />
           <button id="mapLocate" class="btn btn-ghost" type="button">📍 定位</button>
         </div>
+        <div class="place-chips-bar">
+          <span class="chips-label">📍 大家记录的地点（点击查看攻略）：</span>
+          <div id="placeChips" class="place-chips"></div>
+        </div>
         <div class="map-layout">
           <div id="mapContainer" class="map-inner"></div>
           <aside id="placeEditor" class="place-editor" hidden>
@@ -82,7 +86,6 @@
 
             <!-- 新地点草稿：名称 + 第一条攻略 + 图片，一次完成 -->
             <div id="placeCreateBox">
-              <p class="place-hint">💡 位置 = 点击地图的位置（或当前地图中心）</p>
               <label class="field">
                 <span>地点名称</span>
                 <input id="placeName" maxlength="30" placeholder="如：西湖景区" />
@@ -137,7 +140,6 @@
             <p class="form-error" id="placeError"></p>
           </aside>
         </div>
-        <div id="placeChips" class="place-chips"></div>
       </div>
     </section>
 
@@ -228,7 +230,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=41"></script>
-  <script src="js/main.js?v=41" type="module"></script>
+  <script src="js/config.js?v=42"></script>
+  <script src="js/main.js?v=42" type="module"></script>
 </body>
 </html>

@@ -721,11 +721,23 @@ main {
   margin-bottom: 0;
 }
 
+.place-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.chips-label {
+  font-size: 0.82rem;
+  color: var(--text-light);
+}
+
 .place-chips {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-top: 10px;
 }
 
 .place-chip {
