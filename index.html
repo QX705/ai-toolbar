@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI 工具栏</title>
+  <link rel="stylesheet" href="css/style.css?v=34" />
   <script>
     // 临时调试：捕获脚本加载/模块错误 + console.error
     window.addEventListener("error", function (e) {
@@ -27,7 +28,7 @@
     <div class="container topbar-inner">
       <div class="brand">🤖 <span>AI 工具栏</span></div>
       <div class="search-box">
-        <svg viewBox="0 0 24 24" class="icon-search"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <svg viewBox="0 0 24 24" width="16" height="16" class="icon-search"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="searchInput" type="text" placeholder="搜索工具名称或网址..." autocomplete="off" />
       </div>
       <div class="user-area" id="userArea" hidden>
