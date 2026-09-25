@@ -131,26 +131,28 @@ async function initMap() {
     }
 }
 
-// 地图区块进入视口时才开始加载
-if (amapConfigured) {
-    const mapObserver = new IntersectionObserver((entries) => {
-        entries.forEach((en) => {
-            if (en.isIntersecting) {
-                mapObserver.disconnect();
-                initMap();
-            }
-        });
-    }, { threshold: 0.1 });
-    mapObserver.observe(mapSection);
+// 控制条上的地图图标：切换「地图视图」和「工具视图」
+// 地图视图 = 只显示地图；工具视图 = 显示各分类应用
+const toolSectionsEl = document.getElementById("toolSections");
+const emptyStateEl = document.getElementById("emptyState");
 
-    // 控制条上的地图图标：点击收起 / 展开地图板块
+if (amapConfigured) {
     const mapJumpBtn = document.getElementById("mapJump");
     if (mapJumpBtn) {
         mapJumpBtn.hidden = false;
+        mapSection.hidden = true; // 默认显示工具视图
         mapJumpBtn.addEventListener("click", () => {
-            mapSection.hidden = !mapSection.hidden;
-            mapJumpBtn.classList.toggle("active", !mapSection.hidden);
-            mapJumpBtn.title = mapSection.hidden ? "展开地图" : "收起地图";
+            const showMap = mapSection.hidden;
+            mapSection.hidden = !showMap;
+            toolSectionsEl.hidden = showMap;
+            if (emptyStateEl) emptyStateEl.hidden = showMap;
+            if (showMap) {
+                initMap(); // 第一次打开时才加载地图
+                mapJumpBtn.title = "返回工具列表";
+            } else {
+                renderGrid();
+                mapJumpBtn.title = "打开地图";
+            }
         });
     }
 }
