@@ -3,7 +3,7 @@
 // 读：所有人写的攻略和图片；写：每次新开一条，可查可删自己的
 // =========================================================
 
-import { App, escapeHtml, extractErrMsg } from "./store.js?v=32";
+import { App, escapeHtml, extractErrMsg } from "./store.js";
 
 const mapSection = document.getElementById("mapSection");
 const mapSearch = document.getElementById("mapSearch");
@@ -156,7 +156,11 @@ if (amapConfigured) {
     if (mapJumpBtn) {
         mapJumpBtn.hidden = false;
         mapSection.hidden = true; // 默认显示工具视图
+        let lastMapToggle = 0;
         mapJumpBtn.addEventListener("click", () => {
+            const now = Date.now();
+            if (now - lastMapToggle < 400) return; // 防重复触发
+            lastMapToggle = now;
             const showMap = mapSection.hidden;
             mapSection.hidden = !showMap;
             document.getElementById("toolSections").hidden = showMap;
