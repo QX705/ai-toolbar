@@ -319,36 +319,8 @@ export function clearPlacesUI() {
     }
 }
 
-// 大图压缩：超过 2MB 的图片缩到最长边 1920px、质量 0.85，返回 JPEG Blob
-function compressImage(file) {
-    return new Promise((resolve) => {
-        if (file.size <= 2 * 1024 * 1024 || file.type === "image/gif") {
-            resolve(file);
-            return;
-        }
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-            URL.revokeObjectURL(url);
-            const maxSide = 1920;
-            const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
-            const canvas = document.createElement("canvas");
-            canvas.width = Math.round(img.width * scale);
-            canvas.height = Math.round(img.height * scale);
-            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-            canvas.toBlob((blob) => {
-                resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }) : file);
-            }, "image/jpeg", 0.85);
-        };
-        img.onerror = () => {
-            URL.revokeObjectURL(url);
-            resolve(file);
-        };
-        img.src = url;
-    });
-}
-
-placePhotoInput.addEventListener("change", async () => {
+// 摄影师需求：原图直传，不做任何压缩
+placePhotoInput.addEventListener("change", () => {
     const picked = [...placePhotoInput.files];
     placePhotoInput.value = "";
     if (picked.length === 0) return;
@@ -358,7 +330,6 @@ placePhotoInput.addEventListener("change", async () => {
         startDraft(c ? c.getLng() : 116.397, c ? c.getLat() : 39.909, "");
     }
 
-    // 过滤与提示（超大图自动压缩，不再静默丢弃）
     const accepted = [];
     const rejected = [];
     for (const f of picked) {
@@ -366,25 +337,20 @@ placePhotoInput.addEventListener("change", async () => {
             rejected.push(f.name + "（不是图片）");
             continue;
         }
-        if (f.size > 10 * 1024 * 1024) {
-            rejected.push(f.name + "（超过 10MB）");
+        if (f.size > 50 * 1024 * 1024) {
+            rejected.push(f.name + "（超过 50MB）");
             continue;
         }
         accepted.push(f);
     }
-
-    const compressed = [];
-    for (const f of accepted) {
-        compressed.push(await compressImage(f));
-    }
-    pendingFiles = pendingFiles.concat(compressed);
+    pendingFiles = pendingFiles.concat(accepted);
     renderPhotoGrid();
 
     if (rejected.length > 0) {
         placeError.textContent = "已跳过：" + rejected.join("、");
         placeError.classList.remove("ok");
     } else {
-        placeError.textContent = "已添加 " + compressed.length + " 张图片，点「保存」上传";
+        placeError.textContent = "已添加 " + accepted.length + " 张原图，点「保存」上传";
         placeError.classList.add("ok");
     }
 });
