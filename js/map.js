@@ -197,6 +197,12 @@ if (amapConfigured) {
             if (showMap) {
                 initMap(); // 第一次打开时才加载地图
                 mapJumpBtn.title = "返回工具列表";
+                // 攻略面板常驻右侧：没有选中地点时显示创建表单
+                if (!activePlace) {
+                    placeEditor.hidden = false;
+                    placeCreateBox.hidden = false;
+                    placeTabsBox.hidden = true;
+                }
             } else {
                 mapJumpBtn.title = "打开地图";
             }

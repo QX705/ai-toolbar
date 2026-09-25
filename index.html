@@ -72,7 +72,7 @@
           <input id="mapSearch" placeholder="搜索地点/景区，选中后可写攻略..." autocomplete="off" />
           <button id="mapLocate" class="btn btn-ghost" type="button">📍 定位</button>
         </div>
-        <div class="map-wrap">
+        <div class="map-layout">
           <div id="mapContainer" class="map-inner"></div>
           <aside id="placeEditor" class="place-editor" hidden>
             <div class="place-editor-head">
@@ -82,6 +82,7 @@
 
             <!-- 新地点草稿：名称 + 第一条攻略 + 图片，一次完成 -->
             <div id="placeCreateBox">
+              <p class="place-hint">💡 位置 = 点击地图的位置（或当前地图中心）</p>
               <label class="field">
                 <span>地点名称</span>
                 <input id="placeName" maxlength="30" placeholder="如：西湖景区" />
@@ -227,7 +228,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=40"></script>
-  <script src="js/main.js?v=40" type="module"></script>
+  <script src="js/config.js?v=41"></script>
+  <script src="js/main.js?v=41" type="module"></script>
 </body>
 </html>

@@ -611,13 +611,42 @@ main {
   color: var(--primary);
 }
 
+/* 地图板块：左右分栏（窄屏自动上下堆叠） */
+.map-layout {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.map-inner {
+  flex: 1;
+  min-width: 0;
+  height: 460px;
+}
+
+.place-editor {
+  width: 320px;
+  flex-shrink: 0;
+  background: #fffdf5;
+  border: 1px solid #f1e9c9;
+  border-radius: 12px;
+  padding: 14px;
+  overflow-y: auto;
+  max-height: 460px;
+}
+
 @media (max-width: 900px) {
+  .map-layout {
+    flex-direction: column;
+  }
+
   .map-inner {
     height: 320px;
   }
 
   .place-editor {
-    width: 240px;
+    width: 100%;
+    max-height: none;
   }
 }
 
@@ -663,21 +692,7 @@ main {
   overflow: hidden;
 }
 
-/* 攻略编辑：悬浮在地图右上角的小窗 */
-.place-editor {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 280px;
-  max-height: calc(100% - 20px);
-  overflow-y: auto;
-  background: #fffdf5;
-  border: 1px solid #f1e9c9;
-  border-radius: 12px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-  padding: 12px;
-  z-index: 10;
-}
+/* 攻略编辑面板：位于地图右侧（样式见上方 .place-editor 分栏规则） */
 
 .place-editor[hidden] {
   display: none;
