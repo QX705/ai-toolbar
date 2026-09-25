@@ -123,9 +123,6 @@ async function initMap() {
             });
         } catch (e) { console.warn("搜索联想不可用", e); }
 
-        // 容器尺寸稳定后再校准一次（避免布局未完成时创建导致瓦片不加载）
-        setTimeout(() => { if (amapMap) amapMap.resize(); }, 800);
-
         // 兜底：25 秒仍未完成 → 销毁重建一次（瓦片加载停滞的自愈）
         setTimeout(() => {
             if (!mapReady && amapMap) {

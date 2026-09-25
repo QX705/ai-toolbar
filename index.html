@@ -80,13 +80,23 @@
               <button type="button" id="placeCloseBtn" title="关闭">✕</button>
             </div>
 
-            <!-- 新地点草稿：起个名字 -->
+            <!-- 新地点草稿：名称 + 第一条攻略 + 图片，一次完成 -->
             <div id="placeCreateBox">
               <label class="field">
                 <span>地点名称</span>
                 <input id="placeName" maxlength="30" placeholder="如：西湖景区" />
               </label>
-              <button type="button" class="btn btn-primary" id="placeCreateBtn">创建地点</button>
+              <label class="field">
+                <span>第一条攻略</span>
+                <textarea id="guideText" rows="4" placeholder="交通、门票、最佳时间、玩法建议..."></textarea>
+              </label>
+              <div class="field">
+                <span>当地图片</span>
+                <label for="guidePhotoInput" class="photo-add">＋ 添加图片</label>
+                <input id="guidePhotoInput" type="file" accept="image/*" multiple hidden />
+                <div id="guidePendingGrid" class="photo-grid"></div>
+              </div>
+              <button type="button" class="btn btn-primary" id="placeCreateBtn">创建地点并保存攻略</button>
             </div>
 
             <!-- 已创建地点：读 / 写 双标签 -->
@@ -217,7 +227,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=34"></script>
-  <script src="js/main.js?v=34" type="module"></script>
+  <script src="js/config.js?v=35"></script>
+  <script src="js/main.js?v=35" type="module"></script>
 </body>
 </html>
