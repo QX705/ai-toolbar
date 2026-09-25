@@ -123,12 +123,19 @@ async function initMap() {
             });
         } catch (e) { console.warn("搜索联想不可用", e); }
 
+        // 容器尺寸稳定后再校准一次（避免布局未完成时创建导致瓦片不加载）
+        setTimeout(() => { if (amapMap) amapMap.resize(); }, 800);
+
+        // 兜底：25 秒仍未完成 → 销毁重建一次（瓦片加载停滞的自愈）
         setTimeout(() => {
-            if (!mapReady) {
+            if (!mapReady && amapMap) {
+                try { amapMap.destroy(); } catch (e) { /* 忽略 */ }
+                amapMap = null;
                 mapLoading = false;
-                setMapStatus("地图加载失败：请检查 Key / 安全密钥 / 网络");
+                mapRetryUsed = false;
+                initMap();
             }
-        }, 15000);
+        }, 25000);
     } catch (e) {
         mapLoading = false;
         if (!mapRetryUsed) {
@@ -298,25 +305,62 @@ function selectLocation(lng, lat, presetName) {
 
 placeCreateBtn.addEventListener("click", async () => {
     if (!activePlace) return;
+    if (!App.currentUser) {
+        placeError.textContent = "请先登录";
+        return;
+    }
     const name = placeName.value.trim();
     if (!name) {
         placeError.textContent = "请填写地点名称";
         return;
     }
+    const content = guideText.value.trim();
+    if (!content && pendingFiles.length === 0) {
+        placeError.textContent = "写点攻略或添加图片（也可以留空只建地点）";
+        return;
+    }
     placeCreateBtn.disabled = true;
     placeError.textContent = "";
     try {
-        const { data, error } = await App.supabaseClient
+        // 1. 创建地点
+        const { data: place, error } = await App.supabaseClient
             .from("places")
             .insert({ user_id: App.currentUser.id, name, lng: activePlace.lng, lat: activePlace.lat })
             .select()
             .single();
         if (error) throw error;
-        activePlace = { id: data.id, name: data.name, lng: data.lng, lat: data.lat };
+        activePlace = { id: place.id, name: place.name, lng: place.lng, lat: place.lat };
         places.push(activePlace);
+
+        // 2. 有攻略内容或图片 → 保存第一条攻略
+        if (content || pendingFiles.length > 0) {
+            const photos = [];
+            for (const f of pendingFiles) {
+                const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+                const path = `${App.currentUser.id}/${activePlace.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                const { error: upErr } = await App.supabaseClient.storage.from("place-photos").upload(path, f);
+                if (upErr) throw upErr;
+                const { data: pub } = App.supabaseClient.storage.from("place-photos").getPublicUrl(path);
+                photos.push(pub.publicUrl);
+            }
+            const { data: guide, error: gErr } = await App.supabaseClient
+                .from("place_guides")
+                .insert({ user_id: App.currentUser.id, place_id: activePlace.id, author_email: App.currentUser.email || "", content, photos })
+                .select()
+                .single();
+            if (gErr) throw gErr;
+            guides.unshift(guide);
+            pendingFiles = [];
+            guideText.value = "";
+        }
+
         renderMarkers();
         renderPlaceChips();
+        placeCreateBox.hidden = true;
+        placeTabsBox.hidden = false;
         enterPlaceView();
+        placeError.classList.add("ok");
+        placeError.textContent = "地点已创建 ✓";
     } catch (e) {
         placeError.textContent = "创建失败：" + extractErrMsg(e);
     } finally {
