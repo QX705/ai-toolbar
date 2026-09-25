@@ -2,7 +2,7 @@
 // notes.js —— 笔记面板：本地始终保存；登录后同时同步云端
 // =========================================================
 
-import { App, NOTE_KEY, readNoteLocal, writeNoteLocal, extractErrMsg } from "./store.js?v=38";
+import { App, NOTE_KEY, readNoteLocal, writeNoteLocal, extractErrMsg } from "./store.js?v=40";
 
 const notesPanel = document.getElementById("notesPanel");
 const notesToggle = document.getElementById("notesToggle");
@@ -49,11 +49,11 @@ noteText.addEventListener("input", () => {
     noteSaveTimer = setTimeout(saveNote, 600);
 });
 
-let lastNoteToggle = 0;
 notesToggle.addEventListener("click", () => {
     const now = Date.now();
-    if (now - lastNoteToggle < 400) return; // 防重复触发
-    lastNoteToggle = now;
+    // window 级防抖：跨模块实例也只触发一次
+    if (window.__lastNoteToggle && now - window.__lastNoteToggle < 500) return;
+    window.__lastNoteToggle = now;
     const open = notesPanel.hidden;
     notesPanel.hidden = !open;
     notesToggle.classList.toggle("active", open);

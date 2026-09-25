@@ -3,8 +3,8 @@
 // 读：所有人写的攻略和图片；写：每次新开一条，可查可删自己的
 // =========================================================
 
-import { App, escapeHtml, extractErrMsg } from "./store.js?v=38";
-import { openLoginModal } from "./auth.js?v=38";
+import { App, escapeHtml, extractErrMsg } from "./store.js?v=40";
+import { openLoginModal } from "./auth.js?v=40";
 
 const mapSection = document.getElementById("mapSection");
 const mapSearch = document.getElementById("mapSearch");
@@ -186,11 +186,11 @@ if (amapConfigured) {
     if (mapJumpBtn) {
         mapJumpBtn.hidden = false;
         mapSection.hidden = true; // 默认显示工具视图
-        let lastMapToggle = 0;
         mapJumpBtn.addEventListener("click", () => {
             const now = Date.now();
-            if (now - lastMapToggle < 400) return; // 防重复触发
-            lastMapToggle = now;
+            // window 级防抖：即使模块被加载两个实例，也只触发一次切换
+            if (window.__lastMapToggle && now - window.__lastMapToggle < 500) return;
+            window.__lastMapToggle = now;
             const showMap = mapSection.hidden;
             mapSection.hidden = !showMap;
             document.getElementById("toolSections").hidden = showMap;
