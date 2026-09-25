@@ -1,22 +1,36 @@
 // =========================================================
-// map.js —— 高德地图：选点/搜索 → 写攻略 → 传照片
+// map.js —— 高德地图：选点/搜索 → 地点 → 攻略（读/写）→ 照片
+// 读：所有人写的攻略和图片；写：每次新开一条，可查可删自己的
 // =========================================================
 
-import { App, escapeHtml, extractErrMsg } from "./store.js";
+import { App, escapeHtml, extractErrMsg } from "./store.js?v=32";
 
 const mapSection = document.getElementById("mapSection");
 const mapSearch = document.getElementById("mapSearch");
 const mapStatus = document.getElementById("mapStatus");
 
 const placeEditor = document.getElementById("placeEditor");
-const placeName = document.getElementById("placeName");
-const placeGuide = document.getElementById("placeGuide");
-const placePhotoInput = document.getElementById("placePhotoInput");
-const photoGrid = document.getElementById("photoGrid");
-const placeError = document.getElementById("placeError");
-const placeSaveBtn = document.getElementById("placeSaveBtn");
-const placeDeleteBtn = document.getElementById("placeDeleteBtn");
+const placeEditorTitle = document.getElementById("placeEditorTitle");
 const placeCloseBtn = document.getElementById("placeCloseBtn");
+const placeCreateBox = document.getElementById("placeCreateBox");
+const placeName = document.getElementById("placeName");
+const placeCreateBtn = document.getElementById("placeCreateBtn");
+const placeTabsBox = document.getElementById("placeTabsBox");
+const tabRead = document.getElementById("tabRead");
+const tabWrite = document.getElementById("tabWrite");
+const readPane = document.getElementById("readPane");
+const writePane = document.getElementById("writePane");
+const readPhotos = document.getElementById("readPhotos");
+const readPhotosEmpty = document.getElementById("readPhotosEmpty");
+const readGuides = document.getElementById("readGuides");
+const readGuidesEmpty = document.getElementById("readGuidesEmpty");
+const guideText = document.getElementById("guideText");
+const guidePhotoInput = document.getElementById("guidePhotoInput");
+const guidePendingGrid = document.getElementById("guidePendingGrid");
+const guideSaveBtn = document.getElementById("guideSaveBtn");
+const myGuides = document.getElementById("myGuides");
+const myGuidesEmpty = document.getElementById("myGuidesEmpty");
+const placeError = document.getElementById("placeError");
 const placeChips = document.getElementById("placeChips");
 
 let amapMap = null;
@@ -24,10 +38,11 @@ let mapLoading = false;
 let mapReady = false;
 let mapRetryUsed = false;
 
-let places = [];            // 已保存的地点（云端数据）
-let activePlace = null;     // 正在编辑的地点
-let pendingFiles = [];      // 待上传的图片文件
-let placeMarkers = [];      // 地图上的地点标记
+let places = [];            // 全部地点（含别人的）
+let activePlace = null;     // 当前选中的地点 {id, name, lng, lat}
+let guides = [];            // 当前地点的所有攻略（读视图数据）
+let pendingFiles = [];      // 写视图：待上传图片
+let placeMarkers = [];
 
 export const amapConfigured =
     typeof AMAP_KEY === "string" && AMAP_KEY.trim().length > 10 &&
@@ -44,13 +59,11 @@ export function isMapReady() {
 function loadAmapScript() {
     return new Promise((resolve, reject) => {
         if (window.AMap && window.AMap.Map) return resolve();
-        // 安全密钥必须在 SDK 加载前配置
         window._AMapSecurityConfig = { securityJsCode: AMAP_SECURITY_CODE.trim() };
         const s = document.createElement("script");
-        s.src = "https://webapi.amap.com/maps?v=2.0&key=" + encodeURIComponent(AMAP_KEY.trim()) +
+        s.src = "https://webapi.amap.com/maps?v=1.4.15&key=" + encodeURIComponent(AMAP_KEY.trim()) +
             "&plugin=AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation,AMap.Scale,AMap.Geocoder";
         s.onload = () => {
-            // 加载器是异步的：onload 后 AMap 可能还没挂载完成，轮询等它就绪（最多 10 秒）
             let waited = 0;
             const timer = setInterval(() => {
                 if (window.AMap && window.AMap.Map) {
@@ -78,11 +91,11 @@ async function initMap() {
         amapMap = new AMap.Map("mapContainer", {
             zoom: 11,
             center: [116.397, 39.909], // 默认北京，可用搜索/定位移动
-            viewMode: "2D",
         });
 
+        // 点击地图：选中这个位置（创建或打开地点）
         amapMap.on("click", (e) => {
-            startDraft(e.lnglat.getLng(), e.lnglat.getLat(), "");
+            selectLocation(e.lnglat.getLng(), e.lnglat.getLat(), "");
         });
 
         amapMap.on("complete", () => {
@@ -92,14 +105,12 @@ async function initMap() {
             loadPlaces();
         });
 
-        // 增强组件失败不影响地图本体
         try {
             amapMap.addControl(new AMap.Scale());
             amapMap.addControl(new AMap.ToolBar({ position: "RB" }));
         } catch (e) { console.warn("地图工具条不可用", e); }
 
         try {
-            // 搜索框：输入联想 + 选中后飞到该地点，并打开攻略编辑（草稿）
             const autoComplete = new AMap.AutoComplete({ input: "mapSearch" });
             autoComplete.on("select", (e) => {
                 const poi = e.poi;
@@ -108,11 +119,10 @@ async function initMap() {
                     return;
                 }
                 amapMap.setZoomAndCenter(15, [poi.location.lng, poi.location.lat]);
-                startDraft(poi.location.lng, poi.location.lat, poi.name || "");
+                selectLocation(poi.location.lng, poi.location.lat, poi.name || "");
             });
         } catch (e) { console.warn("搜索联想不可用", e); }
 
-        // 兜底：15 秒仍未就绪才视为真正失败
         setTimeout(() => {
             if (!mapReady) {
                 mapLoading = false;
@@ -121,7 +131,6 @@ async function initMap() {
         }, 15000);
     } catch (e) {
         mapLoading = false;
-        // 首次失败自动重试一次（多为加载器异步就绪的时序问题）
         if (!mapRetryUsed) {
             mapRetryUsed = true;
             setTimeout(initMap, 1500);
@@ -131,12 +140,18 @@ async function initMap() {
     }
 }
 
-// 控制条上的地图图标：切换「地图视图」和「工具视图」
-// 地图视图 = 只显示地图；工具视图 = 显示各分类应用
-const toolSectionsEl = document.getElementById("toolSections");
-const emptyStateEl = document.getElementById("emptyState");
-
 if (amapConfigured) {
+    const mapObserver = new IntersectionObserver((entries) => {
+        entries.forEach((en) => {
+            if (en.isIntersecting) {
+                mapObserver.disconnect();
+                initMap();
+            }
+        });
+    }, { threshold: 0.1 });
+    mapObserver.observe(mapSection);
+
+    // 控制条上的地图按钮：切换「地图视图」和「工具视图」
     const mapJumpBtn = document.getElementById("mapJump");
     if (mapJumpBtn) {
         mapJumpBtn.hidden = false;
@@ -144,17 +159,17 @@ if (amapConfigured) {
         mapJumpBtn.addEventListener("click", () => {
             const showMap = mapSection.hidden;
             mapSection.hidden = !showMap;
-            toolSectionsEl.hidden = showMap;
-            if (emptyStateEl) emptyStateEl.hidden = showMap;
+            document.getElementById("toolSections").hidden = showMap;
             if (showMap) {
                 initMap(); // 第一次打开时才加载地图
                 mapJumpBtn.title = "返回工具列表";
             } else {
-                renderGrid();
                 mapJumpBtn.title = "打开地图";
             }
         });
     }
+} else {
+    mapSection.hidden = true; // 未配置高德 Key：不显示地图板块
 }
 
 document.getElementById("mapLocate").addEventListener("click", () => {
@@ -173,88 +188,14 @@ document.getElementById("mapLocate").addEventListener("click", () => {
 });
 
 // =========================================================
-// 地点攻略：数据与编辑
+// 地点与攻略
 // =========================================================
 
-function renderPhotoGrid() {
-    photoGrid.innerHTML = "";
-    activePlace.photos.forEach((url) => {
-        const wrap = document.createElement("div");
-        wrap.className = "photo-item";
-        wrap.innerHTML = `<img src="${escapeHtml(url)}" alt=""><button class="photo-del" title="删除图片">✕</button>`;
-        wrap.querySelector(".photo-del").addEventListener("click", () => {
-            activePlace.removedPhotos.push(url);
-            activePlace.photos = activePlace.photos.filter((u) => u !== url);
-            renderPhotoGrid();
-        });
-        photoGrid.appendChild(wrap);
-    });
-    pendingFiles.forEach((f, i) => {
-        const wrap = document.createElement("div");
-        wrap.className = "photo-item";
-        wrap.innerHTML = `<img src="${URL.createObjectURL(f)}" alt=""><button class="photo-del" title="移除">✕</button>`;
-        wrap.querySelector(".photo-del").addEventListener("click", () => {
-            pendingFiles.splice(i, 1);
-            renderPhotoGrid();
-        });
-        photoGrid.appendChild(wrap);
-    });
-}
-
-function openPlaceEditor(p) {
-    activePlace = {
-        id: p.id || null,
-        isNew: !p.id,
-        lng: p.lng,
-        lat: p.lat,
-        guide: p.guide || "",
-        photos: [...(p.photos || [])],
-        removedPhotos: [],
-        name: p.name || "",
-    };
-    pendingFiles = [];
-    placeEditor.hidden = false;
-    placeName.value = activePlace.name;
-    placeGuide.value = activePlace.guide;
-    placeError.textContent = "";
-    placeError.classList.remove("ok");
-    placeDeleteBtn.hidden = activePlace.isNew;
-    renderPhotoGrid();
-    renderPlaceChips();
-    placeName.focus();
-}
-
-function closePlaceEditor() {
-    placeEditor.hidden = true;
-    activePlace = null;
-    pendingFiles = [];
-}
-
-function startDraft(lng, lat, presetName) {
-    if (!App.currentUser) {
-        setMapStatus("登录后才能记录地点攻略哦");
-        return;
-    }
-    openPlaceEditor({ lng, lat, name: presetName });
-
-    // 没有名字时用逆地理编码补一个地址
-    if (!presetName && window.AMap && AMap.Geocoder) {
-        const geo = new AMap.Geocoder();
-        geo.getAddress([lng, lat], (status, result) => {
-            if (status === "complete" && result.regeocode && activePlace && !placeName.value) {
-                const addr = result.regeocode.formattedAddress || "";
-                placeName.value = addr.replace(/^中国/, "").slice(0, 30);
-            }
-        });
-    }
-}
-
-function updatePlacesAfterSave(saved) {
-    const idx = places.findIndex((p) => p.id === saved.id);
-    if (idx >= 0) places[idx] = saved;
-    else places.push(saved);
-    renderMarkers();
-    renderPlaceChips();
+function maskEmail(email) {
+    if (!email || !email.includes("@")) return "旅友";
+    const [name, domain] = email.split("@");
+    const head = name.slice(0, 3);
+    return head + "***@" + domain;
 }
 
 function renderMarkers() {
@@ -270,7 +211,7 @@ function renderMarkers() {
         });
         m.on("click", () => {
             amapMap.setZoomAndCenter(15, [p.lng, p.lat]);
-            openPlaceEditor(p);
+            openPlace(p);
         });
         placeMarkers.push(m);
     });
@@ -278,7 +219,6 @@ function renderMarkers() {
 
 function renderPlaceChips() {
     placeChips.innerHTML = "";
-    if (places.length === 0) return;
     places.forEach((p) => {
         const chip = document.createElement("button");
         chip.type = "button";
@@ -286,14 +226,14 @@ function renderPlaceChips() {
         chip.textContent = "📍 " + p.name;
         chip.addEventListener("click", () => {
             amapMap.setZoomAndCenter(14, [p.lng, p.lat]);
-            openPlaceEditor(p);
+            openPlace(p);
         });
         placeChips.appendChild(chip);
     });
 }
 
 export async function loadPlaces() {
-    if (!App.currentUser || !App.supabaseClient || !mapReady) return;
+    if (!App.supabaseClient || !mapReady) return;
     const { data, error } = await App.supabaseClient
         .from("places")
         .select("*")
@@ -309,6 +249,7 @@ export async function loadPlaces() {
 
 export function clearPlacesUI() {
     places = [];
+    guides = [];
     activePlace = null;
     pendingFiles = [];
     if (amapMap && mapReady) {
@@ -319,129 +260,254 @@ export function clearPlacesUI() {
     }
 }
 
-// 摄影师需求：原图直传，不做任何压缩
-placePhotoInput.addEventListener("change", () => {
-    const picked = [...placePhotoInput.files];
-    placePhotoInput.value = "";
-    if (picked.length === 0) return;
-    if (!activePlace) {
-        // 未选点前先按地图中心建草稿
-        const c = amapMap ? amapMap.getCenter() : null;
-        startDraft(c ? c.getLng() : 116.397, c ? c.getLat() : 39.909, "");
-    }
-
-    const accepted = [];
-    const rejected = [];
-    for (const f of picked) {
-        if (!f.type.startsWith("image/")) {
-            rejected.push(f.name + "（不是图片）");
-            continue;
-        }
-        if (f.size > 50 * 1024 * 1024) {
-            rejected.push(f.name + "（超过 50MB）");
-            continue;
-        }
-        accepted.push(f);
-    }
-    pendingFiles = pendingFiles.concat(accepted);
-    renderPhotoGrid();
-
-    if (rejected.length > 0) {
-        placeError.textContent = "已跳过：" + rejected.join("、");
-        placeError.classList.remove("ok");
-    } else {
-        placeError.textContent = "已添加 " + accepted.length + " 张原图，点「保存」上传";
-        placeError.classList.add("ok");
-    }
-});
-
-placeCloseBtn.addEventListener("click", closePlaceEditor);
-
-placeSaveBtn.addEventListener("click", async () => {
-    if (!activePlace) return;
+// 选中一个位置：已有地点直接打开；新位置进入创建草稿
+function selectLocation(lng, lat, presetName) {
     if (!App.currentUser) {
-        placeError.textContent = "请先登录，攻略和图片才会保存到你的账号";
+        setMapStatus("登录后才能查看和记录地点攻略哦");
         return;
     }
+    const existing = places.find((p) => p.name === presetName && presetName !== "");
+    if (existing) {
+        openPlace(existing);
+        return;
+    }
+    // 新地点草稿
+    activePlace = { id: null, name: presetName, lng, lat };
+    guides = [];
+    placeEditorTitle.textContent = "📍 新地点";
+    placeCreateBox.hidden = false;
+    placeTabsBox.hidden = true;
+    placeName.value = presetName;
+    placeError.textContent = "";
+
+    // 逆地理编码补一个默认名称
+    if (!presetName && window.AMap && AMap.Geocoder) {
+        const geo = new AMap.Geocoder();
+        geo.getAddress([lng, lat], (status, result) => {
+            if (status === "complete" && result.regeocode && activePlace && !placeName.value) {
+                placeName.value = (result.regeocode.formattedAddress || "").replace(/^中国/, "").slice(0, 30);
+            }
+        });
+    }
+    placeName.focus();
+}
+
+placeCreateBtn.addEventListener("click", async () => {
+    if (!activePlace) return;
     const name = placeName.value.trim();
     if (!name) {
         placeError.textContent = "请填写地点名称";
         return;
     }
-    placeSaveBtn.disabled = true;
+    placeCreateBtn.disabled = true;
     placeError.textContent = "";
     try {
-        let pid = activePlace.id;
-        if (activePlace.isNew) {
-            const { data, error } = await App.supabaseClient
-                .from("places")
-                .insert({ user_id: App.currentUser.id, name, lng: activePlace.lng, lat: activePlace.lat, guide: placeGuide.value, photos: [] })
-                .select()
-                .single();
-            if (error) throw error;
-            pid = data.id;
-            activePlace.id = pid;
-            activePlace.isNew = false;
-        } else {
-            const { error } = await App.supabaseClient
-                .from("places")
-                .update({ name, guide: placeGuide.value })
-                .eq("id", pid);
-            if (error) throw error;
-        }
+        const { data, error } = await App.supabaseClient
+            .from("places")
+            .insert({ user_id: App.currentUser.id, name, lng: activePlace.lng, lat: activePlace.lat })
+            .select()
+            .single();
+        if (error) throw error;
+        activePlace = { id: data.id, name: data.name, lng: data.lng, lat: data.lat };
+        places.push(activePlace);
+        renderMarkers();
+        renderPlaceChips();
+        enterPlaceView();
+    } catch (e) {
+        placeError.textContent = "创建失败：" + extractErrMsg(e);
+    } finally {
+        placeCreateBtn.disabled = false;
+    }
+});
 
-        // 上传新图片到 Storage
+// 进入已创建地点的 读/写 视图
+function enterPlaceView() {
+    placeEditorTitle.textContent = "📍 " + activePlace.name;
+    placeCreateBox.hidden = true;
+    placeTabsBox.hidden = false;
+    switchTab("read");
+    loadGuides();
+}
+
+function openPlace(p) {
+    activePlace = { id: p.id, name: p.name, lng: p.lng, lat: p.lat };
+    placeEditorTitle.textContent = "📍 " + p.name;
+    placeCreateBox.hidden = true;
+    placeTabsBox.hidden = false;
+    switchTab("read");
+    loadGuides();
+}
+
+function switchTab(which) {
+    const read = which === "read";
+    tabRead.classList.toggle("active", read);
+    tabWrite.classList.toggle("active", !read);
+    readPane.hidden = !read;
+    writePane.hidden = read;
+}
+
+tabRead.addEventListener("click", () => switchTab("read"));
+tabWrite.addEventListener("click", () => switchTab("write"));
+
+async function loadGuides() {
+    if (!activePlace || !App.supabaseClient) return;
+    readGuides.innerHTML = "";
+    readPhotos.innerHTML = "";
+    const { data, error } = await App.supabaseClient
+        .from("place_guides")
+        .select("*")
+        .eq("place_id", activePlace.id)
+        .order("created_at", { ascending: false });
+    if (error) {
+        readGuidesEmpty.hidden = false;
+        readGuidesEmpty.textContent = "攻略加载失败：" + extractErrMsg(error);
+        return;
+    }
+    guides = data || [];
+    renderReadTab();
+    renderMyGuides();
+}
+
+function renderReadTab() {
+    // 图片墙：所有攻略的图片
+    readPhotos.innerHTML = "";
+    const allPhotos = guides.flatMap((g) => g.photos || []);
+    readPhotosEmpty.hidden = allPhotos.length > 0;
+    allPhotos.forEach((url) => {
+        const item = document.createElement("div");
+        item.className = "photo-item";
+        item.innerHTML = `<img src="${escapeHtml(url)}" alt="" loading="lazy">`;
+        item.addEventListener("click", () => window.open(url, "_blank"));
+        readPhotos.appendChild(item);
+    });
+
+    // 攻略列表
+    readGuides.innerHTML = "";
+    readGuidesEmpty.hidden = guides.length > 0;
+    guides.forEach((g) => {
+        const card = document.createElement("div");
+        card.className = "guide-card";
+        const date = new Date(g.created_at).toLocaleDateString("zh-CN");
+        const mine = App.currentUser && g.user_id === App.currentUser.id;
+        card.innerHTML = `
+            <div class="guide-head">
+                <span class="guide-author">${escapeHtml(maskEmail(g.author_email))}${mine ? "（我）" : ""}</span>
+                <span class="guide-date">${date}</span>
+            </div>
+            <div class="guide-content">${escapeHtml(g.content)}</div>
+            ${(g.photos || []).length ? `<div class="guide-photos">${(g.photos || []).map((u) => `<img src="${escapeHtml(u)}" loading="lazy" alt="">`).join("")}</div>` : ""}
+        `;
+        readGuides.appendChild(card);
+    });
+}
+
+function renderMyGuides() {
+    myGuides.innerHTML = "";
+    const mine = guides.filter((g) => App.currentUser && g.user_id === App.currentUser.id);
+    myGuidesEmpty.hidden = mine.length > 0;
+    mine.forEach((g) => {
+        const item = document.createElement("div");
+        item.className = "guide-card my";
+        const date = new Date(g.created_at).toLocaleDateString("zh-CN");
+        item.innerHTML = `
+            <div class="guide-head">
+                <span class="guide-date">${date}</span>
+                <button type="button" class="guide-del" title="删除这条">🗑️</button>
+            </div>
+            <div class="guide-content">${escapeHtml(g.content) || "<i>（无文字）</i>"}</div>
+            ${(g.photos || []).length ? `<div class="guide-photos">${(g.photos || []).map((u) => `<img src="${escapeHtml(u)}" loading="lazy" alt="">`).join("")}</div>` : ""}
+        `;
+        item.querySelector(".guide-del").addEventListener("click", () => deleteGuide(g));
+        myGuides.appendChild(item);
+    });
+}
+
+async function deleteGuide(g) {
+    if (!confirm("确定删除这条攻略吗？图片也会一并删除。")) return;
+    try {
+        for (const url of g.photos || []) {
+            const path = decodeURIComponent(url.split("/place-photos/")[1] || "");
+            if (path) await App.supabaseClient.storage.from("place-photos").remove([path]);
+        }
+        const { error } = await App.supabaseClient.from("place_guides").delete().eq("id", g.id);
+        if (error) throw error;
+        await loadGuides();
+    } catch (e) {
+        placeError.textContent = "删除失败：" + extractErrMsg(e);
+    }
+}
+
+// 写视图：待上传图片
+guidePhotoInput.addEventListener("change", () => {
+    const picked = [...guidePhotoInput.files];
+    guidePhotoInput.value = "";
+    if (picked.length === 0) return;
+    pendingFiles = pendingFiles.concat(picked);
+    renderPendingGrid();
+});
+
+function renderPendingGrid() {
+    guidePendingGrid.innerHTML = "";
+    pendingFiles.forEach((f, i) => {
+        const wrap = document.createElement("div");
+        wrap.className = "photo-item";
+        wrap.innerHTML = `<img src="${URL.createObjectURL(f)}" alt=""><button class="photo-del" title="移除">✕</button>`;
+        wrap.querySelector(".photo-del").addEventListener("click", () => {
+            pendingFiles.splice(i, 1);
+            renderPendingGrid();
+        });
+        guidePendingGrid.appendChild(wrap);
+    });
+}
+
+// 保存一条新攻略（每次新开一条）
+guideSaveBtn.addEventListener("click", async () => {
+    if (!activePlace || !activePlace.id) return;
+    if (!App.currentUser) {
+        placeError.textContent = "请先登录再写攻略";
+        return;
+    }
+    const content = guideText.value.trim();
+    if (!content && pendingFiles.length === 0) {
+        placeError.textContent = "写点文字或添加图片再保存";
+        return;
+    }
+    guideSaveBtn.disabled = true;
+    placeError.textContent = "";
+    try {
+        const photos = [];
         for (const f of pendingFiles) {
             const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
-            const path = `${App.currentUser.id}/${pid}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+            const path = `${App.currentUser.id}/${activePlace.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
             const { error: upErr } = await App.supabaseClient.storage.from("place-photos").upload(path, f);
             if (upErr) throw upErr;
             const { data: pub } = App.supabaseClient.storage.from("place-photos").getPublicUrl(path);
-            activePlace.photos.push(pub.publicUrl);
+            photos.push(pub.publicUrl);
         }
+        const { data, error } = await App.supabaseClient
+            .from("place_guides")
+            .insert({ user_id: App.currentUser.id, place_id: activePlace.id, author_email: App.currentUser.email || "", content, photos })
+            .select()
+            .single();
+        if (error) throw error;
+        guides.unshift(data);
         pendingFiles = [];
-
-        // 删除被移除的图片文件
-        for (const url of activePlace.removedPhotos) {
-            const path = decodeURIComponent(url.split("/place-photos/")[1] || "");
-            if (path) await App.supabaseClient.storage.from("place-photos").remove([path]);
-        }
-        activePlace.removedPhotos = [];
-
-        const { error: phErr } = await App.supabaseClient
-            .from("places")
-            .update({ photos: activePlace.photos })
-            .eq("id", pid);
-        if (phErr) throw phErr;
-
-        updatePlacesAfterSave({ id: pid, user_id: App.currentUser.id, name, lng: activePlace.lng, lat: activePlace.lat, guide: placeGuide.value, photos: activePlace.photos });
-        renderPhotoGrid();
+        guideText.value = "";
+        renderReadTab();
+        renderMyGuides();
+        guidePendingGrid.innerHTML = "";
         placeError.classList.add("ok");
-        placeError.textContent = "已保存 ✓";
+        placeError.textContent = "攻略已发布 ✓";
     } catch (e) {
         placeError.textContent = "保存失败：" + extractErrMsg(e);
     } finally {
-        placeSaveBtn.disabled = false;
+        guideSaveBtn.disabled = false;
     }
 });
 
-placeDeleteBtn.addEventListener("click", async () => {
-    if (!activePlace || !confirm(`确定删除「${activePlace.name}」吗？其攻略和图片也会删除。`)) return;
-    placeDeleteBtn.disabled = true;
-    try {
-        for (const url of activePlace.photos) {
-            const path = decodeURIComponent(url.split("/place-photos/")[1] || "");
-            if (path) await App.supabaseClient.storage.from("place-photos").remove([path]);
-        }
-        const { error } = await App.supabaseClient.from("places").delete().eq("id", activePlace.id);
-        if (error) throw error;
-        places = places.filter((p) => p.id !== activePlace.id);
-        renderMarkers();
-        renderPlaceChips();
-        closePlaceEditor();
-    } catch (e) {
-        placeError.textContent = "删除失败：" + extractErrMsg(e);
-    } finally {
-        placeDeleteBtn.disabled = false;
-    }
-});
+function closePlaceEditor() {
+    placeEditor.hidden = true;
+    activePlace = null;
+    guides = [];
+    pendingFiles = [];
+}

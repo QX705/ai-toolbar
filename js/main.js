@@ -10,13 +10,13 @@
 //   map.js    地图 + 地点攻略 + 照片
 // =========================================================
 
-import { App, loadTools } from "./store.js";
-import { renderCategories, renderGrid, onSearchInput } from "./tools.js";
-import { setNoteStatus } from "./notes.js";
-import { initCloud } from "./cloud.js";
-import { updateAuthUI, closeAuth, closePwModal } from "./auth.js";
-import { tryCloseToolModal } from "./modal.js";
-import { amapConfigured } from "./map.js";
+import { App, loadTools } from "./store.js?v=32";
+import { renderCategories, renderGrid, onSearchInput } from "./tools.js?v=32";
+import { setNoteStatus } from "./notes.js?v=32";
+import { initCloud } from "./cloud.js?v=32";
+import { updateAuthUI, closeAuth, closePwModal } from "./auth.js?v=32";
+import { tryCloseToolModal } from "./modal.js?v=32";
+import { amapConfigured } from "./map.js?v=32";
 import "./notes.js";
 import "./auth.js";
 import "./modal.js";

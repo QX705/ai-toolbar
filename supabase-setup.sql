@@ -70,3 +70,41 @@ create policy "用户管理自己的景点图片" on storage.objects
   for all
   using (bucket_id = 'place-photos' and auth.uid()::text = (storage.foldername(name))[1])
   with check (bucket_id = 'place-photos' and auth.uid()::text = (storage.foldername(name))[1]);
+
+-- 6. 攻略表：每个地点下，所有用户都可以读，写的人各自管理自己的条目
+create table if not exists public.place_guides (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  place_id     uuid not null references public.places(id) on delete cascade,
+  author_email text not null default '',
+  content      text not null default '',
+  photos       text[] not null default '{}',
+  created_at   timestamptz not null default now()
+);
+
+alter table public.place_guides enable row level security;
+
+drop policy if exists "所有人可读攻略" on public.place_guides;
+create policy "所有人可读攻略" on public.place_guides
+  for select using (true);
+
+drop policy if exists "用户发表自己的攻略" on public.place_guides;
+create policy "用户发表自己的攻略" on public.place_guides
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "用户删除自己的攻略" on public.place_guides;
+create policy "用户删除自己的攻略" on public.place_guides
+  for delete using (auth.uid() = user_id);
+
+-- 地点所有人可读（别人的标记也能看到）
+drop policy if exists "所有人可读地点" on public.places;
+create policy "所有人可读地点" on public.places
+  for select using (true);
+
+-- 7. 旧数据迁移：把原来存在 places 表里的攻略/照片搬进 place_guides（只搬一次）
+insert into public.place_guides (user_id, place_id, author_email, content, photos, created_at)
+select p.user_id, p.id, coalesce(u.email, ''), p.guide, p.photos, p.created_at
+from public.places p
+left join auth.users u on u.id = p.user_id
+where (p.guide <> '' or array_length(p.photos, 1) > 0)
+  and not exists (select 1 from public.place_guides g where g.place_id = p.id and g.user_id = p.user_id);

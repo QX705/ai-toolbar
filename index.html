@@ -4,7 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI 工具栏</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    // 临时调试：捕获脚本加载/模块错误 + console.error
+    window.addEventListener("error", function (e) {
+      var msg = e.message ? ("msg: " + e.message) : ("resource: " + (e.target && (e.target.src || e.target.href) || "?"));
+      (window.__errs = window.__errs || []).push(msg.slice(0, 150));
+    }, true);
+    (function () {
+      window.__console = [];
+      var orig = console.error;
+      console.error = function () {
+        try { window.__console.push([].slice.call(arguments).map(String).join(" ").slice(0, 200)); } catch (e) {}
+        orig.apply(console, arguments);
+      };
+    })();
+  </script>
 </head>
 <body>
 
@@ -61,28 +75,54 @@
           <div id="mapContainer" class="map-inner"></div>
           <aside id="placeEditor" class="place-editor" hidden>
             <div class="place-editor-head">
-              <strong>📍 地点攻略</strong>
+              <strong id="placeEditorTitle">📍 地点</strong>
               <button type="button" id="placeCloseBtn" title="关闭">✕</button>
             </div>
-            <label class="field">
-              <span>地点名称</span>
-              <input id="placeName" maxlength="30" placeholder="如：西湖景区" />
-            </label>
-            <label class="field">
-              <span>攻略</span>
-              <textarea id="placeGuide" rows="5" placeholder="交通、门票、最佳时间、玩法建议..."></textarea>
-            </label>
-            <div class="field">
-              <span>当地图片</span>
-              <label for="placePhotoInput" class="photo-add">＋ 添加图片</label>
-              <input id="placePhotoInput" type="file" accept="image/*" multiple hidden />
-              <div id="photoGrid" class="photo-grid"></div>
+
+            <!-- 新地点草稿：起个名字 -->
+            <div id="placeCreateBox">
+              <label class="field">
+                <span>地点名称</span>
+                <input id="placeName" maxlength="30" placeholder="如：西湖景区" />
+              </label>
+              <button type="button" class="btn btn-primary" id="placeCreateBtn">创建地点</button>
             </div>
+
+            <!-- 已创建地点：读 / 写 双标签 -->
+            <div id="placeTabsBox" hidden>
+              <div class="place-tabs">
+                <button type="button" id="tabRead" class="place-tab active">📖 读</button>
+                <button type="button" id="tabWrite" class="place-tab">✏️ 写</button>
+              </div>
+
+              <div id="readPane">
+                <div class="read-block">
+                  <span class="read-sub">📷 大家的图片</span>
+                  <div id="readPhotos" class="photo-grid"></div>
+                  <p class="read-empty" id="readPhotosEmpty">还没有图片</p>
+                </div>
+                <div class="read-block">
+                  <span class="read-sub">📝 大家的攻略</span>
+                  <div id="readGuides"></div>
+                  <p class="read-empty" id="readGuidesEmpty">还没有攻略，点「写」来第一条</p>
+                </div>
+              </div>
+
+              <div id="writePane" hidden>
+                <textarea id="guideText" rows="4" placeholder="新攻略：交通、门票、最佳时间、玩法建议..."></textarea>
+                <label for="guidePhotoInput" class="photo-add">＋ 添加图片</label>
+                <input id="guidePhotoInput" type="file" accept="image/*" multiple hidden />
+                <div id="guidePendingGrid" class="photo-grid"></div>
+                <button type="button" class="btn btn-primary" id="guideSaveBtn">保存这条攻略</button>
+                <div class="read-block">
+                  <span class="read-sub">🗂️ 我的记录（可删除）</span>
+                  <div id="myGuides"></div>
+                  <p class="read-empty" id="myGuidesEmpty">你还没有写过</p>
+                </div>
+              </div>
+            </div>
+
             <p class="form-error" id="placeError"></p>
-            <div class="modal-actions">
-              <button type="button" class="btn btn-ghost" id="placeDeleteBtn" hidden>删除</button>
-              <button type="button" class="btn btn-primary" id="placeSaveBtn">保存</button>
-            </div>
           </aside>
         </div>
         <div id="placeChips" class="place-chips"></div>
@@ -176,7 +216,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=30"></script>
-  <script src="js/main.js?v=30" type="module"></script>
+  <script src="js/config.js?v=33"></script>
+  <script src="js/main.js?v=33" type="module"></script>
 </body>
 </html>
