@@ -2,7 +2,7 @@
 // auth.js —— 登录 / 注册 / 修改密码 / 退出 的界面与逻辑
 // =========================================================
 
-import { App, extractErrMsg } from "./store.js?v=43";
+import { App, extractErrMsg } from "./store.js?v=47";
 
 const userArea = document.getElementById("userArea");
 const loginBtn = document.getElementById("loginBtn");

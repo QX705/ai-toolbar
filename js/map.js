@@ -3,8 +3,8 @@
 // 读：所有人写的攻略和图片；写：每次新开一条，可查可删自己的
 // =========================================================
 
-import { App, escapeHtml, extractErrMsg } from "./store.js?v=43";
-import { openLoginModal } from "./auth.js?v=43";
+import { App, escapeHtml, extractErrMsg } from "./store.js?v=47";
+import { openLoginModal } from "./auth.js?v=47";
 
 const mapSection = document.getElementById("mapSection");
 const mapSearch = document.getElementById("mapSearch");
@@ -183,34 +183,62 @@ if (amapConfigured) {
 
     // 控制条上的地图按钮：切换「地图视图」和「工具视图」
     const mapJumpBtn = document.getElementById("mapJump");
+    const jwxtBtn = document.getElementById("jwxtBtn");
+    const jwxtUsable = location.protocol === "http:"; // 教务平台内嵌仅 HTTP 本地访问可用
+
+    // 统一视图切换：tools（工具）/ map（地图）/ jwxt（教务平台）
+    function showView(name) {
+        const showMap = name === "map";
+        const showJwxt = name === "jwxt";
+        mapSection.hidden = !showMap;
+        jwxtSection.hidden = !showJwxt;
+        document.getElementById("toolSections").hidden = showMap || showJwxt;
+        const es = document.getElementById("emptyState");
+        if (es) es.hidden = showMap || showJwxt;
+        if (showMap) {
+            initMap(); // 第一次打开时才加载地图
+            // 攻略面板常驻右侧：没有选中地点时显示创建表单
+            if (!activePlace) {
+                placeEditor.hidden = false;
+                placeCreateBox.hidden = false;
+                placeTabsBox.hidden = true;
+            }
+        }
+        mapJumpBtn.classList.toggle("active", showMap);
+        jwxtBtn.classList.toggle("active", showJwxt);
+        mapJumpBtn.title = showMap ? "返回工具列表" : "打开地图";
+        jwxtBtn.title = showJwxt ? "返回工具列表" : "打开教务平台";
+    }
+
     if (mapJumpBtn) {
         mapJumpBtn.hidden = false;
         mapSection.hidden = true; // 默认显示工具视图
         mapJumpBtn.addEventListener("click", () => {
             const now = Date.now();
             // window 级防抖：即使模块被加载两个实例，也只触发一次切换
-            if (window.__lastMapToggle && now - window.__lastMapToggle < 500) return;
-            window.__lastMapToggle = now;
-            const showMap = mapSection.hidden;
-            mapSection.hidden = !showMap;
-            document.getElementById("toolSections").hidden = showMap;
-            if (showMap) {
-                initMap(); // 第一次打开时才加载地图
-                mapJumpBtn.title = "返回工具列表";
-                // 攻略面板常驻右侧：没有选中地点时显示创建表单
-                if (!activePlace) {
-                    placeEditor.hidden = false;
-                    placeCreateBox.hidden = false;
-                    placeTabsBox.hidden = true;
-                }
-            } else {
-                mapJumpBtn.title = "打开地图";
-            }
+            if (window.__lastViewToggle && now - window.__lastViewToggle < 500) return;
+            window.__lastViewToggle = now;
+            showView(mapSection.hidden ? "map" : "tools");
         });
     }
-} else {
+
+    if (jwxtBtn && jwxtUsable) {
+        jwxtBtn.hidden = false;
+        jwxtSection.hidden = true; // 默认显示工具视图
+        jwxtBtn.addEventListener("click", () => {
+            const now = Date.now();
+            if (window.__lastViewToggle && now - window.__lastViewToggle < 500) return;
+            window.__lastViewToggle = now;
+            showView(jwxtSection.hidden ? "jwxt" : "tools");
+        });
+    }
+}
+
+if (!amapConfigured) {
     mapSection.hidden = true; // 未配置高德 Key：不显示地图板块
 }
+const jwxtSectionEl = document.getElementById("jwxtSection");
+if (jwxtSectionEl) jwxtSectionEl.hidden = true; // 默认显示工具视图
 
 document.getElementById("mapLocate").addEventListener("click", () => {
     if (!mapReady) return;

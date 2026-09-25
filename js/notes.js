@@ -2,7 +2,7 @@
 // notes.js —— 笔记面板：本地始终保存；登录后同时同步云端
 // =========================================================
 
-import { App, NOTE_KEY, readNoteLocal, writeNoteLocal, extractErrMsg } from "./store.js?v=43";
+import { App, NOTE_KEY, readNoteLocal, writeNoteLocal, extractErrMsg } from "./store.js?v=47";
 
 const notesPanel = document.getElementById("notesPanel");
 const notesToggle = document.getElementById("notesToggle");
