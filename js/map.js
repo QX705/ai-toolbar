@@ -3,8 +3,8 @@
 // 读：所有人写的攻略和图片；写：每次新开一条，可查可删自己的
 // =========================================================
 
-import { App, escapeHtml, extractErrMsg } from "./store.js?v=40";
-import { openLoginModal } from "./auth.js?v=40";
+import { App, escapeHtml, extractErrMsg } from "./store.js?v=43";
+import { openLoginModal } from "./auth.js?v=43";
 
 const mapSection = document.getElementById("mapSection");
 const mapSearch = document.getElementById("mapSearch");
