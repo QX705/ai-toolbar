@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 工具栏</title>
+  <link rel="stylesheet" href="css/style.css?v=62" />
+  <script>
+    // 临时调试：捕获脚本加载/模块错误 + console.error
+    window.addEventListener("error", function (e) {
+      var msg = e.message ? ("msg: " + e.message) : ("resource: " + (e.target && (e.target.src || e.target.href) || "?"));
+      (window.__errs = window.__errs || []).push(msg.slice(0, 150));
+    }, true);
+    (function () {
+      window.__console = [];
+      var orig = console.error;
+      console.error = function () {
+        try { window.__console.push([].slice.call(arguments).map(String).join(" ").slice(0, 200)); } catch (e) {}
+        orig.apply(console, arguments);
+      };
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- 顶栏：标题 + 搜索 + 笔记 + 添加 + 账号 -->
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">🤖 <span>AI 工具栏</span></div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" width="16" height="16" class="icon-search"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="searchInput" type="text" placeholder="搜索工具名称或网址..." autocomplete="off" />
+      </div>
+      <div class="user-area" id="userArea" hidden>
+        <!-- 未登录 -->
+        <button id="loginBtn" class="btn btn-primary">登录 / 注册</button>
+        <!-- 已登录 -->
+        <span id="userChip" hidden>
+          <span id="userEmail" class="user-email" title=""></span>
+          <button id="changePwBtn" class="btn btn-ghost">修改密码</button>
+          <button id="logoutBtn" class="btn btn-ghost">退出</button>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 控制条：分类下拉 + 地图/学习通/笔记 + 添加工具 -->
+  <div class="container">
+    <div class="control-bar">
+      <select id="categorySelect" aria-label="选择分类"></select>
+      <button id="mapJump" class="btn btn-ghost" type="button" hidden title="收起地图">🗺️ 地图</button>
+      <button id="studyJump" class="btn btn-ghost" type="button" hidden title="打开学习通">📚 学习通</button>
+      <button id="notesToggle" class="btn btn-ghost" type="button">📝 笔记</button>
+      <button id="addBtn" class="btn btn-primary" type="button">＋ 添加工具</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <!-- 地图（滚动到可见时自动加载） -->
+    <section class="tool-section" id="mapSection">
+      <div class="map-card">
+        <span id="mapStatus" class="note-status view-status"></span>
+        <div class="map-toolbar">
+          <input id="mapSearch" placeholder="搜索地点/景区，选中后可写攻略..." autocomplete="off" />
+          <button id="mapLocate" class="btn btn-ghost" type="button">📍 定位</button>
+        </div>
+        <div class="place-chips-bar">
+          <span class="chips-label">📍 大家记录的地点（点击查看攻略）：</span>
+          <div id="placeChips" class="place-chips"></div>
+        </div>
+        <div class="map-layout">
+          <div id="mapContainer" class="map-inner"></div>
+          <aside id="placeEditor" class="place-editor" hidden>
+            <div class="place-editor-head">
+              <strong id="placeEditorTitle">📍 地点</strong>
+              <button type="button" id="placeCloseBtn" title="关闭">✕</button>
+            </div>
+
+            <!-- 新地点草稿：名称 + 第一条攻略 + 图片，一次完成 -->
+            <div id="placeCreateBox">
+              <label class="field">
+                <span>地点名称</span>
+                <input id="placeName" maxlength="30" placeholder="如：西湖景区" />
+              </label>
+              <label class="field">
+                <span>第一条攻略</span>
+                <textarea id="placeFirstGuide" rows="4" placeholder="交通、门票、最佳时间、玩法建议..."></textarea>
+              </label>
+              <div class="field">
+                <span>当地图片</span>
+                <label for="placeFirstPhotoInput" class="photo-add">＋ 添加图片</label>
+                <input id="placeFirstPhotoInput" type="file" accept="image/*" multiple hidden />
+                <div id="placeFirstGrid" class="photo-grid"></div>
+              </div>
+              <button type="button" class="btn btn-primary" id="placeCreateBtn">创建地点并保存攻略</button>
+            </div>
+
+            <!-- 已创建地点：读 / 写 双标签 -->
+            <div id="placeTabsBox" hidden>
+              <div class="place-tabs">
+                <button type="button" id="tabRead" class="place-tab active">📖 读</button>
+                <button type="button" id="tabWrite" class="place-tab">✏️ 写</button>
+              </div>
+
+              <div id="readPane">
+                <div class="read-block">
+                  <span class="read-sub">📷 大家的图片</span>
+                  <div id="readPhotos" class="photo-grid"></div>
+                  <p class="read-empty" id="readPhotosEmpty">还没有图片</p>
+                </div>
+                <div class="read-block">
+                  <span class="read-sub">📝 大家的攻略</span>
+                  <div id="readGuides"></div>
+                  <p class="read-empty" id="readGuidesEmpty">还没有攻略，点「写」来第一条</p>
+                </div>
+              </div>
+
+              <div id="writePane" hidden>
+                <textarea id="guideText" rows="4" placeholder="新攻略：交通、门票、最佳时间、玩法建议..."></textarea>
+                <label for="guidePhotoInput" class="photo-add">＋ 添加图片</label>
+                <input id="guidePhotoInput" type="file" accept="image/*" multiple hidden />
+                <div id="guidePendingGrid" class="photo-grid"></div>
+                <button type="button" class="btn btn-primary" id="guideSaveBtn">保存这条攻略</button>
+                <div class="read-block">
+                  <span class="read-sub">🗂️ 我的记录（可删除）</span>
+                  <div id="myGuides"></div>
+                  <p class="read-empty" id="myGuidesEmpty">你还没有写过</p>
+                </div>
+              </div>
+            </div>
+
+            <p class="form-error" id="placeError"></p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- 学习通内嵌卡片（点击控制条"学习通"切换显示） -->
+    <section class="tool-section" id="studySection" hidden>
+      <div class="study-card">
+        <iframe id="studyFrame" class="study-frame" src="https://i.chaoxing.com" title="学习通"></iframe>
+
+      </div>
+    </section>
+
+    <!-- 笔记卡片（点击控制条"笔记"切换显示，独立一页） -->
+    <section class="tool-section" id="notesSection" hidden>
+      <div class="notes-card">
+        <span id="noteStatus" class="note-status view-status"></span>
+        <textarea id="noteText" placeholder="随手记点什么…输入后自动保存"></textarea>
+        <p class="notes-note">未登录时保存在本浏览器；登录后自动同步到云端，换设备也不丢。</p>
+      </div>
+    </section>
+
+    <!-- 工具卡片（按分类分组） -->
+    <div id="toolSections"></div>
+
+    <!-- 空状态 -->
+    <div class="empty-state" id="emptyState" hidden>
+      <p class="empty-icon">📭</p>
+      <p>没有找到工具</p>
+      <p class="empty-tip">试试其他关键词，或点击右上角「添加工具」</p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>未登录时，链接和笔记保存在本浏览器中；登录后自动同步到云端，换设备也不丢。</p>
+    <button id="resetBtn" class="reset-link" type="button">↺ 恢复默认工具列表</button>
+  </footer>
+
+  <!-- 添加 / 编辑 弹窗 -->
+  <div class="modal-mask" id="modalMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3 id="modalTitle">添加工具</h3>
+      <form id="toolForm" autocomplete="off">
+        <label class="field">
+          <span>工具名称</span>
+          <input id="toolName" required maxlength="20" placeholder="例如：通义千问" />
+        </label>
+        <label class="field">
+          <span>网址</span>
+          <input id="toolUrl" required placeholder="例如：https://tongyi.aliyun.com" />
+        </label>
+        <label class="field">
+          <span>分类</span>
+          <select id="toolCategory"></select>
+        </label>
+        <p class="form-error" id="formError"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="cancelBtn">取消</button>
+          <button type="submit" class="btn btn-primary" id="saveToolBtn">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 登录 / 注册 弹窗 -->
+  <div class="modal-mask" id="authMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3 id="authTitle">登录</h3>
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tabLogin">登录</button>
+        <button type="button" class="auth-tab" id="tabRegister">注册</button>
+      </div>
+      <form id="authForm" autocomplete="off">
+        <label class="field">
+          <span>邮箱</span>
+          <input id="authEmail" type="email" required placeholder="you@example.com" />
+        </label>
+        <label class="field">
+          <span>密码</span>
+          <input id="authPassword" type="password" required minlength="6" placeholder="至少 6 位" />
+        </label>
+        <p class="form-error" id="authError"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="authCancel">取消</button>
+          <button type="submit" class="btn btn-primary" id="authSubmit">登录</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 修改密码 弹窗 -->
+  <div class="modal-mask" id="pwMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>修改密码</h3>
+      <form id="pwForm" autocomplete="off">
+        <label class="field">
+          <span>新密码</span>
+          <input id="pwNew" type="password" required minlength="6" placeholder="至少 6 位" />
+        </label>
+        <p class="form-error" id="pwError"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="pwCancel">取消</button>
+          <button type="submit" class="btn btn-primary">保存新密码</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
+  <script src="js/config.js?v=62"></script>
+  <script src="js/main.js?v=62" type="module"></script>
+</body>
+</html>

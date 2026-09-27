@@ -1,0 +1,987 @@
+/* ===== 基础 ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --text: #1f2937;
+  --text-light: #6b7280;
+  --bg: #f5f6fa;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --danger: #ef4444;
+  --radius: 14px;
+}
+
+body {
+  font-family: "Segoe UI", "Microsoft YaHei", -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ===== 顶栏 ===== */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 76px;
+}
+
+.brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 0 1 420px;
+  margin: 0 auto;
+}
+
+.icon-search {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--text-light);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 9px 14px 9px 36px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* ===== 按钮 ===== */
+.btn {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-light);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  border-color: #cbd5e1;
+}
+
+/* ===== 主体 ===== */
+main {
+  flex: 1;
+  padding: 36px 0 48px;
+}
+
+/* ===== 分类栏 ===== */
+/* ===== 控制条：分类下拉 + 笔记/地图 ===== */
+.control-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 12px 0 36px;
+}
+
+.control-bar select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 9px 38px 9px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 15px center;
+  font-size: 0.92rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.control-bar select:hover {
+  border-color: var(--primary);
+}
+
+.control-bar select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* 添加工具靠右 */
+#addBtn {
+  margin-left: auto;
+}
+
+/* ===== 工具网格 ===== */
+.tool-section {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  padding-left: 12px;
+  border-left: 4px solid var(--primary);
+  line-height: 1.3;
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 18px;
+}
+
+.tool-card {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(17, 24, 39, 0.07);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.tool-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.13);
+  border-color: #c7d2fe;
+}
+
+.tool-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tool-avatar {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar-letter {
+  user-select: none;
+}
+
+/* 网站真实图标：加载成功后覆盖在字母头像上层 */
+.tool-icon {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.tool-icon.loaded {
+  display: block;
+}
+
+.tool-name {
+  font-size: 0.98rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 悬停操作按钮 */
+.tool-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tool-card:hover .tool-actions,
+.tool-card:focus-within .tool-actions {
+  opacity: 1;
+}
+
+.act-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.act-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.act-btn.danger:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ===== 空状态 ===== */
+.empty-state {
+  text-align: center;
+  padding: 64px 0;
+  color: var(--text-light);
+}
+
+.empty-icon {
+  font-size: 2.6rem;
+  margin-bottom: 8px;
+}
+
+.empty-tip {
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+/* ===== 页脚 ===== */
+.footer {
+  text-align: center;
+  padding: 20px 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.reset-link {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 6px;
+  transition: color 0.2s;
+}
+
+.reset-link:hover {
+  color: var(--danger);
+}
+
+/* ===== 弹窗 ===== */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+/* hidden 属性必须能覆盖 display:flex，否则遮罩会一直挡住页面 */
+.modal-mask[hidden] {
+  display: none;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  padding: 28px 26px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.modal h3 {
+  margin-bottom: 20px;
+  font-size: 1.15rem;
+}
+
+.field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.field span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  resize: vertical;
+}
+
+.field textarea {
+  line-height: 1.6;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.form-error {
+  color: var(--danger);
+  font-size: 0.82rem;
+  min-height: 1.1em;
+  margin-bottom: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ===== 账号区域 ===== */
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-area[hidden] {
+  display: none;
+}
+
+#userChip[hidden] {
+  display: none;
+}
+
+#loginBtn[hidden] {
+  display: none;
+}
+
+.user-email {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  color: var(--text-light);
+}
+
+/* ===== 登录弹窗切换标签 ===== */
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 9px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.92rem;
+  font-family: inherit;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.form-error.ok {
+  color: #059669;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== 笔记面板 ===== */
+.notes-panel {
+  background: #fffdf5;
+  border-bottom: 1px solid #f1e9c9;
+  padding: 18px 0;
+}
+
+.notes-panel[hidden] {
+  display: none;
+}
+
+.notes-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.note-status {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+#noteText {
+  width: 100%;
+  min-height: 150px;
+  padding: 14px 16px;
+  border: 1px solid #e8e0c0;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-family: inherit;
+  line-height: 1.7;
+  background: #fffef9;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#noteText:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+#notesToggle.active {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* ===== 地图卡片 ===== */
+#placeEditor[hidden] {
+  display: none;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.photo-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-del {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.65rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.photo-add {
+  display: block;
+  text-align: center;
+  padding: 9px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.photo-add:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* 地图板块：左右分栏（窄屏自动上下堆叠） */
+.map-layout {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.map-inner {
+  flex: 1;
+  min-width: 0;
+  height: 460px;
+}
+
+.place-editor {
+  width: 320px;
+  flex-shrink: 0;
+  background: #fffdf5;
+  border: 1px solid #f1e9c9;
+  border-radius: 12px;
+  padding: 14px;
+  overflow-y: auto;
+  max-height: 460px;
+}
+
+@media (max-width: 900px) {
+  .map-layout {
+    flex-direction: column;
+  }
+
+  .map-inner {
+    height: 320px;
+  }
+
+  .place-editor {
+    width: 100%;
+    max-height: none;
+  }
+}
+
+/* ===== 地图卡片 ===== */
+.map-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 2px 10px rgba(17, 24, 39, 0.07);
+}
+
+.map-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.map-toolbar input {
+  flex: 1;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.map-toolbar input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.map-wrap {
+  position: relative;
+}
+
+.map-inner {
+  width: 100%;
+  height: 400px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* 攻略编辑面板：位于地图右侧（样式见上方 .place-editor 分栏规则） */
+
+.place-editor[hidden] {
+  display: none;
+}
+
+.place-editor-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.place-editor-head button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.place-editor .form-error {
+  margin-bottom: 6px;
+}
+
+.place-editor .modal-actions {
+  margin-bottom: 0;
+}
+
+.place-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.chips-label {
+  font-size: 0.82rem;
+  color: var(--text-light);
+}
+
+.place-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.place-chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.place-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* 读 / 写 双标签 */
+.place-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.place-tab {
+  flex: 1;
+  padding: 7px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+.place-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.read-block {
+  margin-bottom: 12px;
+}
+
+.read-sub {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+.read-empty {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.guide-card {
+  background: #fffdf5;
+  border: 1px solid #f1e9c9;
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.guide-card.my {
+  background: #f5f6ff;
+  border-color: #dfe3ff;
+}
+
+.guide-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.guide-author {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.guide-date {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.guide-content {
+  font-size: 0.82rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.guide-photos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.guide-photos img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+  cursor: pointer;
+}
+
+#guideText {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  background: #fffef9;
+}
+
+#guideText:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+#guideSaveBtn {
+  width: 100%;
+  margin: 10px 0 4px;
+}
+
+.place-editor .field {
+  margin-bottom: 10px;
+}
+
+.section-title .note-status {
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-left: 8px;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 640px) {
+  .topbar-inner {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 0;
+  }
+
+  .search-box {
+    order: 3;
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .control-bar #addBtn {
+    margin-left: 0;
+  }
+
+  .tool-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
+
+/* ===== 地图板块：突破容器宽度，自适应整个窗口 ===== */
+html,
+body {
+  overflow-x: hidden;
+}
+
+#mapSection {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 4px 24px 10px;
+}
+
+#mapSection .map-card {
+  max-width: none;
+}
+
+#mapSection .map-inner {
+  height: clamp(440px, 52vh, 640px);
+}
+
+/* ===== 学习通内嵌卡片 ===== */
+#studySection {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 4px 24px 10px;
+}
+
+.study-card {
+  max-width: 1600px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 2px 10px rgba(17, 24, 39, 0.07);
+}
+
+.study-frame {
+  width: 100%;
+  height: 100vh;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  display: block;
+}
+
+.study-note {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 10px;
+}
+
+/* ===== 笔记卡片 ===== */
+.notes-card {
+  max-width: 1600px;
+  margin: 0 auto;
+  background: #fffdf5;
+  border: 1px solid #f1e9c9;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 2px 10px rgba(17, 24, 39, 0.07);
+}
+
+.notes-card textarea {
+  width: 100%;
+  min-height: 320px;
+  padding: 16px;
+  border: 1px solid #e8e0c0;
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-family: inherit;
+  line-height: 1.8;
+  background: #fffef9;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.notes-card textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.notes-note {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 10px;
+}
+
+/* 卡片视图顶部状态（去掉大标题后，状态小字显示在卡片内） */
+.view-status {
+  display: block;
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
