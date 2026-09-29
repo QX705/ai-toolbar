@@ -169,6 +169,11 @@ main {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+/* 考试官网下拉框宽度限制 */
+#examSelect {
+  max-width: 160px;
+}
+
 /* 添加工具靠右 */
 #addBtn {
   margin-left: auto;
