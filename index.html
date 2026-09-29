@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI 工具栏</title>
-  <link rel="stylesheet" href="css/style.css?v=62" />
+  <link rel="stylesheet" href="css/style.css?v=63" />
   <script>
     // 临时调试：捕获脚本加载/模块错误 + console.error
     window.addEventListener("error", function (e) {
@@ -48,6 +48,13 @@
   <div class="container">
     <div class="control-bar">
       <select id="categorySelect" aria-label="选择分类"></select>
+      <select id="examSelect" aria-label="考试官网">
+        <option value="">🎓 考试官网</option>
+        <!-- 👇 在下面继续加 <option value="网址">名称</option> 即可，例如：
+        <option value="https://yz.chsi.com.cn">研招网</option>
+        -->
+        <option value="https://www.neea.edu.cn">中国教育考试网（示例）</option>
+      </select>
       <button id="mapJump" class="btn btn-ghost" type="button" hidden title="收起地图">🗺️ 地图</button>
       <button id="studyJump" class="btn btn-ghost" type="button" hidden title="打开学习通">📚 学习通</button>
       <button id="notesToggle" class="btn btn-ghost" type="button">📝 笔记</button>
@@ -239,7 +246,7 @@
   </div>
 
   <!-- Supabase SDK 改为在 main.js 中异步加载：CDN 不通时不阻塞页面 -->
-  <script src="js/config.js?v=62"></script>
-  <script src="js/main.js?v=62" type="module"></script>
+  <script src="js/config.js?v=63"></script>
+  <script src="js/main.js?v=63" type="module"></script>
 </body>
 </html>

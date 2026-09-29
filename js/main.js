@@ -24,6 +24,16 @@ import "./map.js?v=62";
 
 const searchInput = document.getElementById("searchInput");
 
+// ===== 考试官网快捷下拉：选中即在新标签页打开对应网址，随后复位回占位项 =====
+const examSelect = document.getElementById("examSelect");
+examSelect.addEventListener("change", () => {
+    const url = examSelect.value;
+    if (url) {
+        window.open(url, "_blank", "noopener");
+        examSelect.value = ""; // 复位回「🎓 考试官网」
+    }
+});
+
 // ===== 搜索 =====
 searchInput.addEventListener("input", (e) => {
     onSearchInput(e.target.value);
