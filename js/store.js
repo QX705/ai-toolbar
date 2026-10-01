@@ -1,48 +1,14 @@
+import { CATEGORIES, DEFAULT_TOOLS } from "./content.js?v=1.0.0";
+
+export { CATEGORIES, DEFAULT_TOOLS };
+
 // =========================================================
-// store.js —— 全局状态 + 常量 + 通用工具函数
+// store.js —— 全局状态 + 通用工具函数
 // 所有模块共享的状态都放在 App 对象里
 // =========================================================
 
 export const STORAGE_KEY = "ai-toolbar-tools";
 export const NOTE_KEY = "ai-toolbar-note";
-
-export const CATEGORIES = ["AI工具", "编程开发", "图标制作", "学习插件", "游戏官网", "游戏插件", "考试网","其他"];
-
-// 预置工具（未登录时的默认列表；登录后代码里新增的工具会自动合并进云端账号）
-export const DEFAULT_TOOLS = [
-    { id: 1,  name: "豆包",                 url: "https://www.doubao.com",                        category: "AI工具" },
-    { id: 2,  name: "deepseek",             url: "https://chat.deepseek.com",                     category: "AI工具" },
-    { id: 3,  name: "即梦",                 url: "https://jimeng.jianying.com",                    category: "AI工具" },
-    { id: 4,  name: "智谱",                 url: "https://zcode.z.ai/cn",                          category: "AI工具" },
-    { id: 5,  name: "Hitem 3D",            url: "https://www.hitem3d.com/",                        category: "AI工具" },
-    { id: 6,  name: "力扣",                 url: "https://leetcode.cn",                            category: "编程开发" },
-    { id: 7,  name: "牛客网",               url: "https://www.nowcoder.com",                       category: "编程开发" },
-    { id: 8,  name: "CSDN",                 url: "https://www.csdn.net",                           category: "编程开发" },
-    { id: 9,  name: "vscode",               url: "https://code.visualstudio.com",                  category: "编程开发" },
-    { id: 10, name: "GitHub",               url: "https://github.com",                             category: "编程开发" },
-    { id: 11, name: "Qt center",            url: "https://download.qt.io",                         category: "编程开发" },
-    { id: 12, name: "嘉立创EDA客户中心",     url: "https://member.jlc.com",                          category: "编程开发" },
-    { id: 13, name: "ICO图标生成",          url: "https://www.icoa.cc",                             category: "图标制作" },
-    { id: 14, name: "阿里巴巴矢量图",       url: "https://www.iconfont.cn",                         category: "图标制作" },
-    { id: 15, name: "软仓",                 url: "https://ruancang.net",                           category: "学习插件" },
-    { id: 16, name: "凹凸工坊",             url: "https://www.autohanding.com",                    category: "学习插件" },
-    { id: 17, name: "iLovePDF",             url: "https://www.ilovepdf.com",                      category: "学习插件" },
-    { id: 18, name: "TinyPNG",              url: "https://tinypng.com",                           category: "学习插件" },
-    { id: 19, name: "可画",                  url: "https://www.canva.cn",                          category: "学习插件" },
-    { id: 20, name: "稿定",                  url: "http://www.gaoding.com",                        category: "学习插件" },
-    { id: 21, name: "人类一败涂地",         url: "https://gaming.lenovo.com/human-fall-flat",       category: "游戏官网" },
-    { id: 22, name: "科雷娱乐",              url: "https://accounts.klei.com",                      category: "游戏官网" },
-    { id: 23, name: "Steam",                url: "https://store.steampowered.com",                 category: "游戏官网" },
-    { id: 24, name: "BongoCat_Mod",         url: "https://xv40.lanzouu.com/b0fpy9v9e",              category: "游戏插件" },
-    { id: 25, name: "悟空神辅",              url: "https://pan.lanzoue.com/ikkfa49vajfe",            category: "游戏插件" },
-    { id: 26, name: "湖工大科院教务平台",     url: "http://kyjxxt.hut.edu.cn/jsxsd/",                 category: "学校官网" },
-    { id: 27, name: "金数据",               url: "https://jinshuju.net",                             category: "其他" },
-    { id: 28, name: "Supabase",             url: "https://supabase.com",                             category: "其他" },
-    { id: 29, name: "全民简历",             url: "https://www.qmjianli.com",                         category: "其他" },
-    { id: 30, name: "Maker World",          url: "https://makerworld.com.cn",                        category: "其他" },
-    { id: 31, name: "flysheep资源避难所",    url: "https://www.flysheep6.com",                        category: "其他" },
-
-];
 
 // 全局共享状态
 export const App = {

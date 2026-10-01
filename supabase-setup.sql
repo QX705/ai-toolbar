@@ -108,3 +108,35 @@ from public.places p
 left join auth.users u on u.id = p.user_id
 where (p.guide <> '' or array_length(p.photos, 1) > 0)
   and not exists (select 1 from public.place_guides g where g.place_id = p.id and g.user_id = p.user_id);
+
+-- =========================================================
+-- 8. 笔记附件存储（2026-10）：note-files 存储桶
+--    路径规则：note-files/{用户id}/{笔记id}/时间戳-文件名
+--    公开读（笔记图片/链接直接访问），写入仅限登录用户本人目录
+--    单文件上限跟随项目设置（免费档默认 50MB，
+--    可在 Dashboard -> Storage -> Settings 调大）
+-- =========================================================
+
+insert into storage.buckets (id, name, public)
+values ('note-files', 'note-files', true)
+on conflict (id) do nothing;
+
+drop policy if exists "登录用户上传笔记附件" on storage.objects;
+create policy "登录用户上传笔记附件"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'note-files' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "登录用户更新自己的笔记附件" on storage.objects;
+create policy "登录用户更新自己的笔记附件"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'note-files' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "登录用户删除自己的笔记附件" on storage.objects;
+create policy "登录用户删除自己的笔记附件"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'note-files' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "所有人可读笔记附件" on storage.objects;
+create policy "所有人可读笔记附件"
+  on storage.objects for select to public
+  using (bucket_id = 'note-files');

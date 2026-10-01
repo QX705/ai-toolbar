@@ -7,20 +7,20 @@
 //   notes.js  笔记
 //   auth.js   登录/注册/修改密码
 //   cloud.js  Supabase 云同步与自愈
-//   map.js    地图 + 地点攻略 + 照片
+//   map.js    学习通内嵌视图切换（原地图模块已移除）
 // =========================================================
 
-import { App, loadTools } from "./store.js?v=62";
-import { renderCategories, renderGrid, onSearchInput } from "./tools.js?v=62";
-import { setNoteStatus } from "./notes.js?v=62";
-import { initCloud } from "./cloud.js?v=62";
-import { updateAuthUI, closeAuth, closePwModal } from "./auth.js?v=62";
-import { tryCloseToolModal } from "./modal.js?v=62";
-import { amapConfigured } from "./map.js?v=62";
-import "./notes.js?v=62";
-import "./auth.js?v=62";
-import "./modal.js?v=62";
-import "./map.js?v=62";
+import { App, loadTools } from "./store.js?v=1.0.0";
+import { renderCategories, renderGrid, onSearchInput } from "./tools.js?v=1.0.0";
+import { setNoteStatus } from "./notes.js?v=1.0.0";
+import { initCloud } from "./cloud.js?v=1.0.0";
+import { updateAuthUI, closeAuth, closePwModal } from "./auth.js?v=1.0.0";
+import { tryCloseToolModal } from "./modal.js?v=1.0.0";
+import "./notes.js?v=1.0.0";
+import "./auth.js?v=1.0.0";
+import "./modal.js?v=1.0.0";
+import "./map.js?v=1.0.0";
+import "./desktop.js?v=1.0.0";
 
 const searchInput = document.getElementById("searchInput");
 

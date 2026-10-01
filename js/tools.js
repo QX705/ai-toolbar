@@ -2,7 +2,7 @@
 // tools.js —— 工具卡片：渲染、分类筛选、增删改查
 // =========================================================
 
-import { App, CATEGORIES, DEFAULT_TOOLS, escapeHtml, avatarColor, normUrlKey, normalizeUrl, iconSources, saveTools } from "./store.js?v=62";
+import { App, CATEGORIES, DEFAULT_TOOLS, escapeHtml, avatarColor, normUrlKey, normalizeUrl, iconSources, saveTools } from "./store.js?v=1.0.0";
 
 const toolSections = document.getElementById("toolSections");
 const categorySelect = document.getElementById("categorySelect");
@@ -102,6 +102,7 @@ function buildCard(tool) {
 }
 
 export function renderGrid() {
+    window.dispatchEvent(new CustomEvent("tools-changed")); // 通知桌面模式等其他视图
     const list = visibleTools();
     toolSections.innerHTML = "";
     emptyState.hidden = list.length > 0;

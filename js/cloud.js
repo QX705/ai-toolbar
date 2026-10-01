@@ -3,11 +3,10 @@
 // 注意：SDK 全局变量叫 supabase（var 声明），这里用 supabaseClient
 // =========================================================
 
-import { App, DEFAULT_TOOLS, normUrlKey, extractErrMsg, saveTools, readNoteLocal, writeNoteLocal } from "./store.js?v=62";
-import { renderCategories, renderGrid } from "./tools.js?v=62";
-import { setNoteStatus, getNoteValue, setNoteValue } from "./notes.js?v=62";
-import { updateAuthUI } from "./auth.js?v=62";
-import { loadPlaces, clearPlacesUI, isMapReady } from "./map.js?v=62";
+import { App, DEFAULT_TOOLS, normUrlKey, extractErrMsg, saveTools, readNoteLocal, writeNoteLocal } from "./store.js?v=1.0.0";
+import { renderCategories, renderGrid } from "./tools.js?v=1.0.0";
+import { setNoteStatus, getNoteValue, setNoteValue } from "./notes.js?v=1.0.0";
+import { updateAuthUI } from "./auth.js?v=1.0.0";
 
 const SUPABASE_CDNS = [
     "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm",
@@ -65,7 +64,6 @@ function handleSignedIn(user) {
     syncOnLogin()
         .then(() => {
             App.syncFailCount = 0;
-            if (isMapReady()) loadPlaces();
         })
         .catch((e) => {
             App.syncing = false;
@@ -84,7 +82,6 @@ function handleSignedOut() {
         saveTools();
         App.localBackup = null;
     }
-    clearPlacesUI();
     updateAuthUI();
     renderCategories();
     renderGrid();
