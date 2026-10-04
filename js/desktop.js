@@ -5,10 +5,10 @@
 // 壁纸与搜索引擎偏好存本浏览器 localStorage。
 // =========================================================
 
-import { App, avatarColor, iconSources, CATEGORIES } from "./store.js?v=1.0.4";
-import { ENGINES, WALLPAPERS, CAT_ICONS, DESKTOP_PET_TIPS } from "./content.js?v=1.0.4";
-import { openToolModal } from "./modal.js?v=1.0.4";
-import { removeTool } from "./tools.js?v=1.0.4";
+import { App, avatarColor, iconSources, CATEGORIES } from "./store.js?v=1.0.5";
+import { ENGINES, WALLPAPERS, CAT_ICONS, DESKTOP_PET_TIPS } from "./content.js?v=1.0.5";
+import { openToolModal } from "./modal.js?v=1.0.5";
+import { removeTool } from "./tools.js?v=1.0.5";
 
 const desktopToggle = document.getElementById("desktopToggle");
 const desktopSection = document.getElementById("desktopSection");
@@ -402,16 +402,18 @@ dtDock.addEventListener("click", (e) => {
     if (e.target.closest("#dtDockHandle")) {
         dockOpen = !dockOpen;
         renderDock();
-        // 展开后若面板超出屏幕左缘，把整个 Dock 右移收进屏幕
+        // 展开后若面板超出屏幕（左缘或右缘），把整个 Dock 平移收进屏幕
         if (dockOpen) {
             requestAnimationFrame(() => {
                 const panel = dtDock.querySelector(".dt-dock-panel");
                 if (!panel) return;
                 const pr = panel.getBoundingClientRect();
-                const overflow = 10 - pr.left;
-                if (overflow > 0) {
+                let shift = 0;
+                if (pr.left < 10) shift = 10 - pr.left;
+                else if (pr.right > innerWidth - 10) shift = (innerWidth - 10) - pr.right;
+                if (shift) {
                     const cur = dtDock.getBoundingClientRect();
-                    dtDock.style.left = (cur.left + overflow) + "px";
+                    dtDock.style.left = Math.max(10, cur.left + shift) + "px";
                     dtDock.style.right = "auto";
                     const r2 = dtDock.getBoundingClientRect();
                     layout.widgets.dock = { x: Math.round(r2.left), y: Math.round(r2.top) };

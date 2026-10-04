@@ -1454,7 +1454,7 @@ body.desktop-mode {
   align-items: flex-start;
   gap: 8px;
   position: fixed;
-  right: 20px;
+  left: 20px;
   bottom: 20px;
   z-index: 65;
 }
