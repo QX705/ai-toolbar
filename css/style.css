@@ -1461,7 +1461,8 @@ body.desktop-mode {
 
 .dt-dock-panel {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 6px;
   background: rgba(15, 17, 30, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -1472,6 +1473,8 @@ body.desktop-mode {
   transform: translateX(-12px);
   pointer-events: none;
   transition: opacity 0.18s, transform 0.18s;
+  max-width: calc(100vw - 60px);
+  overflow-x: auto;
 }
 
 .dt-dock-panel.open {
@@ -1520,9 +1523,11 @@ body.desktop-mode {
 }
 
 .dt-dock-sep {
-  height: 1px;
+  width: 1px;
+  height: 30px;
   background: rgba(255, 255, 255, 0.14);
-  margin: 4px 2px;
+  margin: 2px 4px;
+  flex-shrink: 0;
 }
 
 .dt-grid {
