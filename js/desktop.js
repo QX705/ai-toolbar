@@ -5,10 +5,10 @@
 // 壁纸与搜索引擎偏好存本浏览器 localStorage。
 // =========================================================
 
-import { App, avatarColor, iconSources, CATEGORIES } from "./store.js?v=1.0.5";
-import { ENGINES, WALLPAPERS, CAT_ICONS, DESKTOP_PET_TIPS } from "./content.js?v=1.0.5";
-import { openToolModal } from "./modal.js?v=1.0.5";
-import { removeTool } from "./tools.js?v=1.0.5";
+import { App, avatarColor, escapeHtml, iconSources, CATEGORIES } from "./store.js?v=1.0.10";
+import { ENGINES, WALLPAPERS, CAT_ICONS, PET_PART_BOXES } from "./content.js?v=1.0.10";
+import { openToolModal } from "./modal.js?v=1.0.10";
+import { removeTool } from "./tools.js?v=1.0.10";
 
 const desktopToggle = document.getElementById("desktopToggle");
 const desktopSection = document.getElementById("desktopSection");
@@ -487,34 +487,31 @@ function jumpTo(btnId) {
     const btn = document.getElementById(btnId);
     if (btn) btn.click();
 }
-// ===== 桌宠：有反馈的 2D 小猫（纯 SVG，无外部资源）=====
+// ===== 桌宠：粉毛猫耳娘（assets/pet.webp 原图分层，与登录页同款形象）=====
 const petEl = document.createElement("div");
 petEl.className = "dt-pet";
 petEl.title = "点我有惊喜，拖我换位置";
 petEl.innerHTML = `
     <div class="dt-pet-bubble"></div>
-    <svg viewBox="0 0 120 120" aria-hidden="true">
-        <path d="M97 80 q16 2 10 -16" stroke="#f3f4fb" fill="none" stroke-width="9" stroke-linecap="round"/>
-        <path d="M32 44 L24 16 L48 32 Z" fill="#f3f4fb"/>
-        <path d="M34 40 L30 24 L43 33 Z" fill="#ffc9d6"/>
-        <path d="M88 44 L96 16 L72 32 Z" fill="#f3f4fb"/>
-        <path d="M86 40 L90 24 L77 33 Z" fill="#ffc9d6"/>
-        <ellipse cx="60" cy="68" rx="37" ry="33" fill="#f3f4fb"/>
-        <circle cx="39" cy="74" r="5.5" fill="#ffc9d6" opacity=".85"/>
-        <circle cx="81" cy="74" r="5.5" fill="#ffc9d6" opacity=".85"/>
-        <g class="p-eye"><circle class="p-pupil" cx="46" cy="64" r="5.2" fill="#2b2b33"/></g>
-        <g class="p-eye"><circle class="p-pupil" cx="74" cy="64" r="5.2" fill="#2b2b33"/></g>
-        <path class="p-happy" d="M40 65 q6 -9 12 0" stroke="#2b2b33" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <path class="p-happy" d="M68 65 q6 -9 12 0" stroke="#2b2b33" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <path d="M56 74 q4 5 8 0" stroke="#2b2b33" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-        <path d="M18 62 L34 66 M18 72 L34 72" stroke="#d8dcea" stroke-width="1.6"/>
-        <path d="M102 62 L86 66 M102 72 L86 72" stroke="#d8dcea" stroke-width="1.6"/>
-    </svg>`;
+    <div class="dt-pet-body">
+        <canvas class="dt-layer" data-layer="base"></canvas>
+        <canvas class="dt-layer" data-layer="earL"></canvas>
+        <canvas class="dt-layer" data-layer="earR"></canvas>
+        <canvas class="dt-layer" data-layer="pawL"></canvas>
+        <canvas class="dt-layer" data-layer="pawR"></canvas>
+    </div>
+    <div class="dt-pet-launch" hidden>
+        <input class="dt-pet-launch-input" type="text" placeholder="输入应用名，回车跳转" autocomplete="off" />
+        <div class="dt-pet-launch-list"></div>
+    </div>`;
 dtRoot.appendChild(petEl);
 const petBubble = petEl.querySelector(".dt-pet-bubble");
-const petPupils = petEl.querySelectorAll(".p-pupil");
-const petEyes = petEl.querySelectorAll(".p-eye");
-let bubbleTimer = null, blinkTimer = null, sleepTimer = null, petRaf = 0;
+const petBody = petEl.querySelector(".dt-pet-body");
+const petLaunch = petEl.querySelector(".dt-pet-launch");
+const petLaunchInput = petLaunch.querySelector("input");
+const petLaunchList = petLaunch.querySelector(".dt-pet-launch-list");
+let bubbleTimer = null, sleepTimer = null, petRaf = 0;
+let launcherOpen = false, launcherMatches = [];
 
 function petSay(text) {
     petBubble.textContent = text;
@@ -530,37 +527,127 @@ function petWake() {
         petSay("Zzz…（点我唤醒）");
     }, 25000);
 }
-function petBlinkLoop() {
-    blinkTimer = setTimeout(() => {
-        petEl.classList.add("blink");
-        setTimeout(() => petEl.classList.remove("blink"), 160);
-        petBlinkLoop();
-    }, 2200 + Math.random() * 3600);
+// ===== 快捷启动器：点桌宠 → 输应用名 → 回车直达 =====
+function openLauncher() {
+    launcherOpen = true;
+    petLaunch.hidden = false;
+    const r = petEl.getBoundingClientRect();
+    petLaunch.classList.toggle("below", r.top < 210); // 桌宠靠上时输入框向下弹
+    petLaunchInput.value = "";
+    renderMatches("");
+    setTimeout(() => petLaunchInput.focus(), 60);
 }
-petEl.addEventListener("click", () => {
+function closeLauncher() {
+    launcherOpen = false;
+    petLaunch.hidden = true;
+}
+function renderMatches(q) {
+    const kw = q.trim().toLowerCase();
+    launcherMatches = kw ? App.tools.filter((t) => t.name.toLowerCase().includes(kw)).slice(0, 4) : [];
+    petLaunchList.innerHTML = launcherMatches.length
+        ? launcherMatches.map((t, i) => `<button class="dt-launch-row" type="button" data-idx="${i}">${escapeHtml(t.name)}</button>`).join("")
+        : (kw ? `<div class="dt-launch-none">没找到「${escapeHtml(q.trim())}」</div>` : `<div class="dt-launch-none">输入名字，回车直达</div>`);
+}
+petEl.addEventListener("click", (e) => {
+    if (e.target.closest(".dt-pet-launch")) return; // 输入框/结果列表里的点击不算点桌宠
     if (petEl.dataset.dragged) { delete petEl.dataset.dragged; return; }
     petWake();
-    petEl.classList.add("jump", "happy");
-    setTimeout(() => petEl.classList.remove("jump", "happy"), 750);
-    const d = new Date();
-    const tips = [...DESKTOP_PET_TIPS, "今天 " + (d.getMonth() + 1) + "月" + d.getDate() + "日，加油！"];
-    petSay(tips[Math.floor(Math.random() * tips.length)]);
+    if (launcherOpen) { closeLauncher(); return; }
+    petEl.classList.add("jump");
+    setTimeout(() => petEl.classList.remove("jump"), 750);
+    openLauncher();
 });
 dtRoot.addEventListener("mousemove", (e) => {
     petWake();
     if (petRaf) return;
     petRaf = requestAnimationFrame(() => {
         petRaf = 0;
-        petEyes.forEach((g) => {
-            const r = g.getBoundingClientRect();
-            const ang = Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2));
-            g.querySelector(".p-pupil").style.transform =
-                `translate(${(Math.cos(ang) * 3.4).toFixed(1)}px, ${(Math.sin(ang) * 3.4).toFixed(1)}px)`;
-        });
+        const r = petEl.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width / 2);
+        petBody.style.transform = `rotate(${Math.max(-6, Math.min(6, dx / 40)).toFixed(1)}deg)`;
     });
 });
 petWake();
-petBlinkLoop();
+
+// 图层构建：与登录页同款（去白底 + 耳朵/爪子分层微动）
+(async () => {
+    const img = new Image();
+    img.src = "assets/pet.webp";
+    await img.decode();
+    const W = img.naturalWidth, H = img.naturalHeight;
+    const src = document.createElement("canvas");
+    src.width = W;
+    src.height = H;
+    const sctx = src.getContext("2d");
+    sctx.drawImage(img, 0, 0);
+    const data = sctx.getImageData(0, 0, W, H);
+    const px = data.data;
+    const idx = (x, y) => (y * W + x) * 4;
+    const isBg = (x, y) => {
+        const i = idx(x, y);
+        return px[i + 3] === 0 || (px[i] > 235 && px[i + 1] > 235 && px[i + 2] > 235);
+    };
+    const seen = new Uint8Array(W * H);
+    const stack = [];
+    for (let x = 0; x < W; x++) stack.push(x, 0, x, H - 1);
+    for (let y = 0; y < H; y++) stack.push(0, y, W - 1, y);
+    while (stack.length) {
+        const y = stack.pop(), x = stack.pop();
+        if (x < 0 || y < 0 || x >= W || y >= H || seen[y * W + x]) continue;
+        if (!isBg(x, y)) continue;
+        seen[y * W + x] = 1;
+        px[idx(x, y) + 3] = 0;
+        stack.push(x + 1, y, x - 1, y, x, y + 1, x, y - 1);
+    }
+    for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+            const i = idx(x, y);
+            if (px[i + 3] === 0) continue;
+            const nearClear = (x > 0 && px[idx(x - 1, y) + 3] === 0) || (x < W - 1 && px[idx(x + 1, y) + 3] === 0) || (y > 0 && px[idx(x, y - 1) + 3] === 0) || (y < H - 1 && px[idx(x, y + 1) + 3] === 0);
+            if (!nearClear) continue;
+            const bright = (px[i] + px[i + 1] + px[i + 2]) / 3;
+            if (bright > 205) px[i + 3] = Math.round(px[i + 3] * Math.max(0, 1 - (bright - 205) / 50));
+        }
+    }
+    sctx.putImageData(data, 0, 0);
+    const base = petEl.querySelector('[data-layer="base"]');
+    base.width = W;
+    base.height = H;
+    base.getContext("2d").drawImage(src, 0, 0);
+    for (const [key, box] of Object.entries(PET_PART_BOXES)) {
+        const el = petEl.querySelector(`[data-layer="${key}"]`);
+        el.width = W;
+        el.height = H;
+        el.getContext("2d").drawImage(src, box.x, box.y, box.w, box.h, box.x, box.y, box.w, box.h);
+        el.style.transformOrigin = box.origin;
+    }
+})().catch((e) => console.warn("桌宠图层构建失败：", e));
+
+petLaunchInput.addEventListener("input", () => renderMatches(petLaunchInput.value));
+petLaunchInput.addEventListener("keydown", (e) => {
+    if (e.isComposing) return; // 中文输入法选字时的回车不触发跳转
+    if (e.key === "Enter") {
+        e.preventDefault();
+        const kw = petLaunchInput.value.trim().toLowerCase();
+        if (!launcherMatches.length) { petSay(`没找到「${kw}」喵`); return; }
+        const exact = launcherMatches.find((t) => t.name.toLowerCase() === kw);
+        const target = exact || launcherMatches[0];
+        window.open(target.url, "_blank", "noopener");
+        closeLauncher();
+    } else if (e.key === "Escape") {
+        e.stopPropagation(); // 只收起输入框，不退出桌面
+        closeLauncher();
+    }
+});
+petLaunchList.addEventListener("click", (e) => {
+    const row = e.target.closest("[data-idx]");
+    if (!row) return;
+    const t = launcherMatches[Number(row.dataset.idx)];
+    if (t) { window.open(t.url, "_blank", "noopener"); closeLauncher(); }
+});
+document.addEventListener("click", (e) => {
+    if (launcherOpen && !petEl.contains(e.target)) closeLauncher();
+});
 
 dtNotesBtn.addEventListener("click", () => jumpTo("notesToggle"));
 dtStudyBtn.addEventListener("click", () => jumpTo("studyJump"));

@@ -1747,33 +1747,46 @@ body.desktop-mode {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* ===== 桌宠（有反馈的 2D 小猫） ===== */
+/* ===== 桌宠（粉毛猫耳娘，assets/pet.webp 原图分层） ===== */
 .dt-pet {
   position: absolute;
-  left: 40px;
-  bottom: 90px;
-  width: 92px;
+  left: 24px;
+  bottom: 104px;
+  width: 112px;
   cursor: grab;
   z-index: 66;
   touch-action: none;
   user-select: none;
+  animation: ap-bob 3.2s ease-in-out infinite;
 }
 
 .dt-pet:active {
   cursor: grabbing;
 }
 
-.dt-pet svg {
-  width: 92px;
-  height: 92px;
-  display: block;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+.dt-pet-body {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  transition: transform 0.1s linear, filter 0.3s;
+}
+
+.dt-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+.dt-pet.sleep .dt-pet-body {
+  filter: brightness(0.55) saturate(0.7);
 }
 
 .dt-pet-bubble {
   position: absolute;
-  left: 66px;
-  bottom: 84px;
+  left: 80px;
+  bottom: 96px;
   background: #fff;
   color: #1f2937;
   border-radius: 12px;
@@ -1785,6 +1798,7 @@ body.desktop-mode {
   transition: opacity 0.2s, transform 0.2s;
   pointer-events: none;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  z-index: 2;
 }
 
 .dt-pet-bubble.show {
@@ -1802,36 +1816,6 @@ body.desktop-mode {
   border-bottom: 0;
 }
 
-.p-eye {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 0.12s, opacity 0.15s;
-}
-
-.p-pupil {
-  transition: transform 0.08s;
-}
-
-.p-happy {
-  opacity: 0;
-}
-
-.dt-pet.blink .p-eye {
-  transform: scaleY(0.12);
-}
-
-.dt-pet.sleep .p-eye {
-  transform: scaleY(0.15);
-}
-
-.dt-pet.happy .p-eye {
-  opacity: 0;
-}
-
-.dt-pet.happy .p-happy {
-  opacity: 1;
-}
-
 @keyframes dt-pet-jump {
   0% { transform: translateY(0); }
   30% { transform: translateY(-18px) rotate(-4deg); }
@@ -1840,8 +1824,71 @@ body.desktop-mode {
   100% { transform: none; }
 }
 
-.dt-pet.jump svg {
+.dt-pet.jump .dt-pet-body {
   animation: dt-pet-jump 0.7s;
+}
+
+/* 快捷启动器（点桌宠弹出） */
+.dt-pet-launch {
+  position: absolute;
+  left: -14px;
+  bottom: calc(100% + 10px);
+  width: 224px;
+  background: rgba(15, 17, 30, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  padding: 10px;
+  z-index: 70;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
+}
+
+.dt-pet-launch.below {
+  bottom: auto;
+  top: calc(100% + 10px);
+}
+
+.dt-pet-launch-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.dt-pet-launch-input:focus {
+  border-color: rgba(99, 102, 241, 0.85);
+}
+
+.dt-launch-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.dt-launch-row:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dt-launch-none {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 6px 0;
 }
 
 @media (max-width: 820px) {
