@@ -1,4 +1,4 @@
-import { CATEGORIES, DEFAULT_TOOLS } from "./content.js?v=1.0.3";
+import { CATEGORIES, DEFAULT_TOOLS } from "./content.js?v=1.0.4";
 
 export { CATEGORIES, DEFAULT_TOOLS };
 

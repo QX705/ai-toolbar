@@ -1470,7 +1470,7 @@ body.desktop-mode {
   padding: 10px;
   backdrop-filter: blur(8px);
   opacity: 0;
-  transform: translateX(-12px);
+  transform: translateX(12px);
   pointer-events: none;
   transition: opacity 0.18s, transform 0.18s;
   max-width: calc(100vw - 60px);

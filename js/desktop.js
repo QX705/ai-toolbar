@@ -5,10 +5,10 @@
 // 壁纸与搜索引擎偏好存本浏览器 localStorage。
 // =========================================================
 
-import { App, avatarColor, iconSources, CATEGORIES } from "./store.js?v=1.0.3";
-import { ENGINES, WALLPAPERS, CAT_ICONS, DESKTOP_PET_TIPS } from "./content.js?v=1.0.3";
-import { openToolModal } from "./modal.js?v=1.0.3";
-import { removeTool } from "./tools.js?v=1.0.3";
+import { App, avatarColor, iconSources, CATEGORIES } from "./store.js?v=1.0.4";
+import { ENGINES, WALLPAPERS, CAT_ICONS, DESKTOP_PET_TIPS } from "./content.js?v=1.0.4";
+import { openToolModal } from "./modal.js?v=1.0.4";
+import { removeTool } from "./tools.js?v=1.0.4";
 
 const desktopToggle = document.getElementById("desktopToggle");
 const desktopSection = document.getElementById("desktopSection");
@@ -257,14 +257,14 @@ let dockOpen = false;
 function renderDock() {
     const cats = dockCategories();
     dtDock.innerHTML =
-        `<button class="dt-dock-handle${dockOpen ? " active" : ""}" id="dtDockHandle" type="button" title="${dockOpen ? "收起分类" : "展开分类"}">🗂️</button>` +
         `<div class="dt-dock-panel${dockOpen ? " open" : ""}">` +
         cats.map((c) => `<button class="dt-dock-btn${c === dtCat ? " active" : ""}" type="button" data-cat="${c}" title="${c}">${catIcon(c)}</button>`).join("") +
         `<span class="dt-dock-sep"></span>` +
         `<button class="dt-dock-btn" type="button" data-act="add" title="添加应用">＋</button>` +
         `<button class="dt-dock-btn" type="button" data-act="wallpaper" title="桌面背景">🖼️</button>` +
         `<button class="dt-dock-btn" type="button" data-act="reset" title="恢复默认布局">↺</button>` +
-        `</div>`;
+        `</div>` +
+        `<button class="dt-dock-handle${dockOpen ? " active" : ""}" id="dtDockHandle" type="button" title="${dockOpen ? "收起分类" : "展开分类"}">🗂️</button>`;
 }
 
 // ===== 应用网格 =====
@@ -402,16 +402,16 @@ dtDock.addEventListener("click", (e) => {
     if (e.target.closest("#dtDockHandle")) {
         dockOpen = !dockOpen;
         renderDock();
-        // 展开后若横排面板超出屏幕右缘，把整个 Dock 左移收进屏幕
+        // 展开后若面板超出屏幕左缘，把整个 Dock 右移收进屏幕
         if (dockOpen) {
             requestAnimationFrame(() => {
                 const panel = dtDock.querySelector(".dt-dock-panel");
                 if (!panel) return;
                 const pr = panel.getBoundingClientRect();
-                const overflow = pr.right - (innerWidth - 10);
+                const overflow = 10 - pr.left;
                 if (overflow > 0) {
                     const cur = dtDock.getBoundingClientRect();
-                    dtDock.style.left = Math.max(10, cur.left - overflow) + "px";
+                    dtDock.style.left = (cur.left + overflow) + "px";
                     dtDock.style.right = "auto";
                     const r2 = dtDock.getBoundingClientRect();
                     layout.widgets.dock = { x: Math.round(r2.left), y: Math.round(r2.top) };
