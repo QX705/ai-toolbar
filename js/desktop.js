@@ -5,10 +5,10 @@
 // 壁纸与搜索引擎偏好存本浏览器 localStorage。
 // =========================================================
 
-import { App, avatarColor, iconSources, CATEGORIES } from "./store.js?v=1.0.0";
-import { ENGINES, WALLPAPERS, CAT_ICONS, DESKTOP_PET_TIPS } from "./content.js?v=1.0.0";
-import { openToolModal } from "./modal.js?v=1.0.0";
-import { removeTool } from "./tools.js?v=1.0.0";
+import { App, avatarColor, iconSources, CATEGORIES } from "./store.js?v=1.0.1";
+import { ENGINES, WALLPAPERS, CAT_ICONS, DESKTOP_PET_TIPS } from "./content.js?v=1.0.1";
+import { openToolModal } from "./modal.js?v=1.0.1";
+import { removeTool } from "./tools.js?v=1.0.1";
 
 const desktopToggle = document.getElementById("desktopToggle");
 const desktopSection = document.getElementById("desktopSection");
@@ -257,14 +257,14 @@ let dockOpen = false;
 function renderDock() {
     const cats = dockCategories();
     dtDock.innerHTML =
+        `<button class="dt-dock-handle${dockOpen ? " active" : ""}" id="dtDockHandle" type="button" title="${dockOpen ? "收起分类" : "展开分类"}">🗂️</button>` +
         `<div class="dt-dock-panel${dockOpen ? " open" : ""}">` +
         cats.map((c) => `<button class="dt-dock-btn${c === dtCat ? " active" : ""}" type="button" data-cat="${c}" title="${c}">${catIcon(c)}</button>`).join("") +
         `<span class="dt-dock-sep"></span>` +
         `<button class="dt-dock-btn" type="button" data-act="add" title="添加应用">＋</button>` +
         `<button class="dt-dock-btn" type="button" data-act="wallpaper" title="桌面背景">🖼️</button>` +
         `<button class="dt-dock-btn" type="button" data-act="reset" title="恢复默认布局">↺</button>` +
-        `</div>` +
-        `<button class="dt-dock-handle${dockOpen ? " active" : ""}" id="dtDockHandle" type="button" title="${dockOpen ? "收起分类" : "展开分类"}">🗂️</button>`;
+        `</div>`;
 }
 
 // ===== 应用网格 =====

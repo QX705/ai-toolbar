@@ -10,17 +10,17 @@
 //   map.js    学习通内嵌视图切换（原地图模块已移除）
 // =========================================================
 
-import { App, loadTools } from "./store.js?v=1.0.0";
-import { renderCategories, renderGrid, onSearchInput } from "./tools.js?v=1.0.0";
-import { setNoteStatus } from "./notes.js?v=1.0.0";
-import { initCloud } from "./cloud.js?v=1.0.0";
-import { updateAuthUI, closeAuth, closePwModal } from "./auth.js?v=1.0.0";
-import { tryCloseToolModal } from "./modal.js?v=1.0.0";
-import "./notes.js?v=1.0.0";
-import "./auth.js?v=1.0.0";
-import "./modal.js?v=1.0.0";
-import "./map.js?v=1.0.0";
-import "./desktop.js?v=1.0.0";
+import { App, loadTools } from "./store.js?v=1.0.1";
+import { renderCategories, renderGrid, onSearchInput } from "./tools.js?v=1.0.1";
+import { setNoteStatus } from "./notes.js?v=1.0.1";
+import { initCloud } from "./cloud.js?v=1.0.1";
+import { updateAuthUI, closeAuth, closePwModal } from "./auth.js?v=1.0.1";
+import { tryCloseToolModal } from "./modal.js?v=1.0.1";
+import "./notes.js?v=1.0.1";
+import "./auth.js?v=1.0.1";
+import "./modal.js?v=1.0.1";
+import "./map.js?v=1.0.1";
+import "./desktop.js?v=1.0.1";
 
 const searchInput = document.getElementById("searchInput");
 
