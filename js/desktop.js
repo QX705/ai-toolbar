@@ -5,10 +5,10 @@
 // 壁纸与搜索引擎偏好存本浏览器 localStorage。
 // =========================================================
 
-import { App, avatarColor, escapeHtml, iconSources, CATEGORIES } from "./store.js?v=1.0.11";
-import { ENGINES, WALLPAPERS, CAT_ICONS, PET_PART_BOXES } from "./content.js?v=1.0.11";
-import { openToolModal } from "./modal.js?v=1.0.11";
-import { removeTool } from "./tools.js?v=1.0.11";
+import { App, avatarColor, escapeHtml, iconSources, CATEGORIES } from "./store.js?v=1.0.12";
+import { ENGINES, WALLPAPERS, CAT_ICONS, PET_PART_BOXES } from "./content.js?v=1.0.12";
+import { openToolModal } from "./modal.js?v=1.0.12";
+import { removeTool } from "./tools.js?v=1.0.12";
 
 const desktopToggle = document.getElementById("desktopToggle");
 const desktopSection = document.getElementById("desktopSection");
@@ -246,7 +246,7 @@ const catIcon = (c) => CAT_ICONS[c] || "📁";
 
 let dockOpen = false;
 function renderDock() {
-    const cats = dockCategories();
+    const cats = dockCategories().reverse(); // 反转按钮顺序
     dtDock.innerHTML =
         `<div class="dt-dock-panel${dockOpen ? " open" : ""}">` +
         cats.map((c) => `<button class="dt-dock-btn${c === dtCat ? " active" : ""}" type="button" data-cat="${c}" title="${c}">${catIcon(c)}</button>`).join("") +

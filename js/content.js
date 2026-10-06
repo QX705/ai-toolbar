@@ -34,12 +34,11 @@ export const DEFAULT_TOOLS = [
     { id: 23, name: "Steam",                url: "https://store.steampowered.com",                 category: "游戏官网" },
     { id: 24, name: "BongoCat_Mod",         url: "https://xv40.lanzouu.com/b0fpy9v9e",             category: "游戏插件" },
     { id: 25, name: "悟空神辅",             url: "https://pan.lanzoue.com/ikkfa49vajfe",           category: "游戏插件" },
-    { id: 26, name: "湖工大科院教务平台",   url: "http://kyjxxt.hut.edu.cn/jsxsd/",                category: "学校官网" },
-    { id: 27, name: "金数据",               url: "https://jinshuju.net",                           category: "其他" },
-    { id: 28, name: "Supabase",             url: "https://supabase.com",                           category: "其他" },
-    { id: 29, name: "全民简历",             url: "https://www.qmjianli.com",                       category: "其他" },
-    { id: 30, name: "Maker World",          url: "https://makerworld.com.cn",                      category: "其他" },
-    { id: 31, name: "flysheep资源避难所",   url: "https://www.flysheep6.com",                      category: "其他" },
+    { id: 26, name: "金数据",               url: "https://jinshuju.net",                           category: "其他" },
+    { id: 27, name: "Supabase",             url: "https://supabase.com",                           category: "其他" },
+    { id: 28, name: "全民简历",             url: "https://www.qmjianli.com",                       category: "其他" },
+    { id: 29, name: "Maker World",          url: "https://makerworld.com.cn",                      category: "其他" },
+    { id: 30, name: "flysheep资源避难所",   url: "https://www.flysheep6.com",                      category: "其他" },
 ];
 
 // ===== 桌面模式：搜索引擎 =====
@@ -62,7 +61,7 @@ export const WALLPAPERS = [
 // ===== 桌面模式：分类 Dock 图标 =====
 export const CAT_ICONS = {
     AI工具: "🤖", 编程开发: "💻", 图标制作: "🎨", 学习插件: "📚",
-    游戏官网: "🎮", 游戏插件: "🕹️", 考试网: "📝", 学校官网: "🏫", 其他: "📦",
+    游戏官网: "🎮", 游戏插件: "🕹️", 考试网: "📝", 其他: "📦",
 };
 
 // ===== 笔记：新用户首篇指南 =====
