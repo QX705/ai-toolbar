@@ -7,8 +7,8 @@
 //   - 未登录保存到本地；登录后自动同步；退出登录还原本地快照（cloud.js）
 // =========================================================
 
-import { App, NOTE_KEY, readNoteLocal, writeNoteLocal, escapeHtml, extractErrMsg } from "./store.js?v=1.0.10";
-import { SEED_NOTE } from "./content.js?v=1.0.10";
+import { App, NOTE_KEY, readNoteLocal, writeNoteLocal, escapeHtml, extractErrMsg } from "./store.js?v=1.0.11";
+import { SEED_NOTE } from "./content.js?v=1.0.11";
 
 // ===== DOM =====
 const notesSection = document.getElementById("notesSection");

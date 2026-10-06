@@ -2,7 +2,7 @@
 // tools.js —— 工具卡片：渲染、分类筛选、增删改查
 // =========================================================
 
-import { App, CATEGORIES, DEFAULT_TOOLS, escapeHtml, avatarColor, normUrlKey, normalizeUrl, iconSources, saveTools } from "./store.js?v=1.0.10";
+import { App, CATEGORIES, DEFAULT_TOOLS, escapeHtml, avatarColor, normUrlKey, normalizeUrl, iconSources, saveTools } from "./store.js?v=1.0.11";
 
 const toolSections = document.getElementById("toolSections");
 const categorySelect = document.getElementById("categorySelect");

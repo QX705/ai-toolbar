@@ -3,10 +3,10 @@
 // 注意：SDK 全局变量叫 supabase（var 声明），这里用 supabaseClient
 // =========================================================
 
-import { App, DEFAULT_TOOLS, normUrlKey, extractErrMsg, saveTools, readNoteLocal, writeNoteLocal } from "./store.js?v=1.0.10";
-import { renderCategories, renderGrid } from "./tools.js?v=1.0.10";
-import { setNoteStatus, getNoteValue, setNoteValue } from "./notes.js?v=1.0.10";
-import { updateAuthUI } from "./auth.js?v=1.0.10";
+import { App, DEFAULT_TOOLS, normUrlKey, extractErrMsg, saveTools, readNoteLocal, writeNoteLocal } from "./store.js?v=1.0.11";
+import { renderCategories, renderGrid } from "./tools.js?v=1.0.11";
+import { setNoteStatus, getNoteValue, setNoteValue } from "./notes.js?v=1.0.11";
+import { updateAuthUI } from "./auth.js?v=1.0.11";
 
 const SUPABASE_CDNS = [
     "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm",

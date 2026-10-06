@@ -5,10 +5,10 @@
 // 壁纸与搜索引擎偏好存本浏览器 localStorage。
 // =========================================================
 
-import { App, avatarColor, escapeHtml, iconSources, CATEGORIES } from "./store.js?v=1.0.10";
-import { ENGINES, WALLPAPERS, CAT_ICONS, PET_PART_BOXES } from "./content.js?v=1.0.10";
-import { openToolModal } from "./modal.js?v=1.0.10";
-import { removeTool } from "./tools.js?v=1.0.10";
+import { App, avatarColor, escapeHtml, iconSources, CATEGORIES } from "./store.js?v=1.0.11";
+import { ENGINES, WALLPAPERS, CAT_ICONS, PET_PART_BOXES } from "./content.js?v=1.0.11";
+import { openToolModal } from "./modal.js?v=1.0.11";
+import { removeTool } from "./tools.js?v=1.0.11";
 
 const desktopToggle = document.getElementById("desktopToggle");
 const desktopSection = document.getElementById("desktopSection");
@@ -17,7 +17,6 @@ const dtTime = document.getElementById("dtTime");
 const dtDate = document.getElementById("dtDate");
 const dtSearchForm = document.getElementById("dtSearchForm");
 const dtSearchInput = document.getElementById("dtSearchInput");
-const dtEngines = document.getElementById("dtEngines");
 const dtDock = document.getElementById("dtDock");
 const dtGrid = document.getElementById("dtGrid");
 const dtNotesBtn = document.getElementById("dtNotesBtn");
@@ -30,14 +29,11 @@ const dtWpApply = document.getElementById("dtWpApply");
 const dtWpReset = document.getElementById("dtWpReset");
 
 // ===== 搜索引擎 =====
-const ENGINE_KEY = "ai-toolbar-engine";
 const WALLPAPER_KEY = "ai-toolbar-wallpaper";
 
 let active = false;
 let clockTimer = null;
 let dtCat = "全部";
-let engineId = localStorage.getItem(ENGINE_KEY);
-if (!ENGINES.some((e) => e.id === engineId)) engineId = "baidu";
 
 // ===== 自由布局：图标吸附到格子，时钟/搜索/Dock 可拖到任意位置 =====
 const LAYOUT_KEY = "ai-toolbar-dt-layout";
@@ -237,11 +233,6 @@ function saveWallpaper(wp) {
 }
 
 // ===== 搜索引擎条 =====
-function renderEngines() {
-    dtEngines.innerHTML = ENGINES.map((e) =>
-        `<button class="dt-engine${e.id === engineId ? " active" : ""}" type="button" data-eng="${e.id}" title="${e.name}" style="background:${e.color}">${e.badge}</button>`).join("");
-}
-
 // ===== Dock（分类）=====
 function dockCategories() {
     const extra = [...new Set(App.tools.map((t) => t.category || "其他"))];
@@ -357,7 +348,6 @@ function setDesktop(on) {
     if (on) {
         applyWallpaper();
         applyLayout();
-        renderEngines();
         renderDock();
         renderGridDt();
         tick();
@@ -384,17 +374,8 @@ dtSearchForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const q = dtSearchInput.value.trim();
     if (!q) return;
-    const eng = ENGINES.find((x) => x.id === engineId) || ENGINES[0];
+    const eng = ENGINES[0];
     window.open(eng.url + encodeURIComponent(q), "_blank", "noopener");
-});
-
-dtEngines.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-eng]");
-    if (!btn) return;
-    engineId = btn.dataset.eng;
-    localStorage.setItem(ENGINE_KEY, engineId);
-    renderEngines();
-    dtSearchInput.focus();
 });
 
 dtDock.addEventListener("click", (e) => {
