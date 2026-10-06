@@ -2,8 +2,8 @@
 // modal.js —— 添加 / 编辑工具弹窗
 // =========================================================
 
-import { App, CATEGORIES, normalizeUrl, extractErrMsg } from "./store.js?v=1.0.12";
-import { addTool, updateTool, renderGrid } from "./tools.js?v=1.0.12";
+import { App, CATEGORIES, normalizeUrl, extractErrMsg } from "./store.js?v=1.0.14";
+import { addTool, updateTool, renderGrid } from "./tools.js?v=1.0.14";
 
 const modalMask = document.getElementById("modalMask");
 const modalTitle = document.getElementById("modalTitle");

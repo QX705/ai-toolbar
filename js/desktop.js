@@ -5,10 +5,10 @@
 // 壁纸与搜索引擎偏好存本浏览器 localStorage。
 // =========================================================
 
-import { App, avatarColor, escapeHtml, iconSources, CATEGORIES } from "./store.js?v=1.0.12";
-import { ENGINES, WALLPAPERS, CAT_ICONS, PET_PART_BOXES } from "./content.js?v=1.0.12";
-import { openToolModal } from "./modal.js?v=1.0.12";
-import { removeTool } from "./tools.js?v=1.0.12";
+import { App, avatarColor, escapeHtml, iconSources, CATEGORIES } from "./store.js?v=1.0.14";
+import { ENGINES, WALLPAPERS, CAT_ICONS, PET_PART_BOXES } from "./content.js?v=1.0.14";
+import { openToolModal } from "./modal.js?v=1.0.14";
+import { removeTool } from "./tools.js?v=1.0.14";
 
 const desktopToggle = document.getElementById("desktopToggle");
 const desktopSection = document.getElementById("desktopSection");
@@ -33,7 +33,7 @@ const WALLPAPER_KEY = "ai-toolbar-wallpaper";
 
 let active = false;
 let clockTimer = null;
-let dtCat = "全部";
+let dtCat = null; // null = 显示全部
 
 // ===== 自由布局：图标吸附到格子，时钟/搜索/Dock 可拖到任意位置 =====
 const LAYOUT_KEY = "ai-toolbar-dt-layout";
@@ -236,7 +236,7 @@ function saveWallpaper(wp) {
 // ===== Dock（分类）=====
 function dockCategories() {
     const extra = [...new Set(App.tools.map((t) => t.category || "其他"))];
-    const all = ["全部"];
+    const all = [];
     for (const c of CATEGORIES) if (!all.includes(c)) all.push(c);
     for (const c of extra) if (!all.includes(c)) all.push(c);
     return all;
@@ -260,7 +260,7 @@ function renderDock() {
 
 // ===== 应用网格 =====
 function visibleApps() {
-    return App.tools.filter((t) => dtCat === "全部" || (t.category || "其他") === dtCat);
+    return App.tools.filter((t) => !dtCat || (t.category || "其他") === dtCat);
 }
 
 function buildApp(tool) {
@@ -321,7 +321,7 @@ function renderGridDt() {
     const list = visibleApps();
     if (!list.length) {
         dtGrid.style.height = "auto";
-        dtGrid.innerHTML = `<div class="dt-empty">${dtCat === "全部" ? "还没有应用，点左侧 ＋ 添加" : "这个分类还没有应用"}</div>`;
+        dtGrid.innerHTML = `<div class="dt-empty">${dtCat ? "这个分类还没有应用" : "还没有应用，点左侧 ＋ 添加"}</div>`;
         return;
     }
     let maxR = 0;
@@ -408,7 +408,8 @@ dtDock.addEventListener("click", (e) => {
     if (!btn) return;
     let handled = false;
     if (btn.dataset.cat) {
-        dtCat = btn.dataset.cat;
+        dtCat = (dtCat === btn.dataset.cat) ? null : btn.dataset.cat; // 再点一次当前分类 = 回到全部
+        renderDock();
         renderGridDt();
         handled = true;
     } else if (btn.dataset.act === "add") {
